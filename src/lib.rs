@@ -2,3 +2,4 @@
 extern crate assert_approx_eq;
 
 mod math;
+mod matrix;
