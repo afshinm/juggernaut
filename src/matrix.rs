@@ -70,9 +70,9 @@ impl MatrixTrait for Matrix {
             for n in 0usize..b.cols() {
                 let mut cell_result: f64 = 0f64;
 
-                for row_cell in row {
+                for (k, row_cell) in row.iter().enumerate() {
                     // row of the first Matrix X col of the second Matrix
-                    cell_result += row_cell * b.get(n, m);
+                    cell_result += row_cell * b.get(k, n);
                 }
 
                 result.0[m][n] = cell_result;
@@ -112,11 +112,20 @@ mod tests {
     }
 
     #[test]
-    fn random_mul_test() {
+    fn random_mul_test1() {
         let a = Matrix(vec![vec![1f64, 2f64], vec![3f64, 4f64]]);
         let b = Matrix(vec![vec![2f64, 0f64], vec![1f64, 2f64]]);
         let result = Matrix(vec![vec![4f64, 4f64], vec![10f64, 8f64]]);
 
         assert_eq!(a.dot(b), result);
+    }
+
+    #[test]
+    fn random_mul_test2() {
+        let a = Matrix(vec![vec![1f64, 2f64], vec![3f64, 4f64]]);
+        let b = Matrix(vec![vec![2f64, 0f64], vec![1f64, 2f64]]);
+        let result = Matrix(vec![vec![2f64, 4f64], vec![7f64, 10f64]]);
+
+        assert_eq!(b.dot(a), result);
     }
 }
