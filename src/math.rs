@@ -12,32 +12,14 @@ impl<T> Multiplication<T> for Vec<T> where T: Mul<Output = T> + Copy {
     }
 }
 
-/// Activation functions
-struct Activation {}
-
-impl Activation {
-    /// Calculates the Sigmoid of input `x`
-    pub fn sigmoid(x: f64) -> f64 {
-        1f64 / (1f64 + (-x).exp())
-    }
-
-    /// Calculates the Derivative Sigmoid of input `x`
-    pub fn sigmoid_derivative(x: f64) -> f64 {
-        x * (1f64 - x)
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::Activation;
+    use math::Multiplication;
 
     #[test]
-    fn sigmoid_test() {
-        assert_approx_eq!(Activation::sigmoid(5f64), 0.9933071490f64);
+    fn vec_dot() {
+        assert_eq!(vec![1,2,3].dot(2), vec![2,4,6]);
+        assert_eq!(vec![5,0,1].dot(5), vec![25,0,5]);
     }
 
-    #[test]
-    fn sigmoid_derivative_test() {
-        assert_approx_eq!(Activation::sigmoid_derivative(5f64), -20f64);
-    }
 }
