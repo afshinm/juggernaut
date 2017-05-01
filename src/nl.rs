@@ -3,9 +3,9 @@ use matrix::MatrixTrait;
 
 /// Represents a neural layer with its weights
 pub struct NeuralLayer {
-    inputs: usize,
-    neurons: usize,
-    weights: Matrix
+    pub inputs: usize,
+    pub neurons: usize,
+    pub weights: Matrix
 }
 
 impl NeuralLayer {
