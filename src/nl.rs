@@ -18,7 +18,6 @@ impl NeuralLayer {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

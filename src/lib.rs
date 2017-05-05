@@ -8,3 +8,4 @@ mod activation;
 mod matrix;
 mod nl;
 mod nn;
+mod sample;

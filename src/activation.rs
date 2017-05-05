@@ -1,5 +1,6 @@
 /// Activation functions
 pub trait Activation {
+    fn new() -> Self;
     // the function itself
     fn calc(x: f64) -> f64;
     // Derivative
@@ -9,6 +10,10 @@ pub trait Activation {
 pub struct Sigmoid {}
 
 impl Activation for Sigmoid {
+    fn new() -> Sigmoid {
+        return Sigmoid{};
+    }
+
     /// Calculates the Sigmoid of input `x`
     fn calc(x: f64) -> f64 {
         1f64 / (1f64 + (-x).exp())
