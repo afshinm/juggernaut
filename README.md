@@ -1,4 +1,4 @@
-# Juggernaut
+# Juggernaut [![Build Status](https://travis-ci.org/afshinm/juggernaut.svg?branch=master)](https://travis-ci.org/afshinm/juggernaut)
 > Neural Network in Rust
 
 # Build
