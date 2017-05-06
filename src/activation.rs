@@ -11,7 +11,7 @@ pub struct Sigmoid;
 
 impl Activation for Sigmoid {
     fn new() -> Sigmoid {
-        return Sigmoid{};
+        return Sigmoid;
     }
 
     /// Calculates the Sigmoid of input `x`
