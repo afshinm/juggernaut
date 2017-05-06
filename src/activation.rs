@@ -7,7 +7,7 @@ pub trait Activation {
     fn derivative(x: f64) -> f64;
 }
 
-pub struct Sigmoid {}
+pub struct Sigmoid;
 
 impl Activation for Sigmoid {
     fn new() -> Sigmoid {
