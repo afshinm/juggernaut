@@ -14,7 +14,10 @@ impl<T: Activation> NeuralNetwork<T> {
     pub fn new(samples: Vec<Sample>, activation: T) -> NeuralNetwork<T>
         where T: Activation
     {
-        let initial_layers: Vec<NeuralLayer> = vec![];
+        let mut initial_layers: Vec<NeuralLayer> = vec![];
+
+        // adding the first layer, which is a layer that connects inputs to outputs
+        initial_layers.push(NeuralLayer::new(samples[0].get_outputs_count(), samples[0].get_inputs_count()));
 
         NeuralNetwork {
             activation: activation,
@@ -43,7 +46,30 @@ impl<T: Activation> NeuralNetwork<T> {
     /// # }
     /// ```
     pub fn get_inputs_count(&self) -> usize {
-        self.samples[0].inputs.len()
+        self.samples[0].get_inputs_count()
+    }
+
+    /// Returns the number of outputs for one Sample object
+    ///
+    /// Example:
+    ///
+    /// ```
+    /// # #[macro_use] extern crate juggernaut;
+    /// # fn main() {
+    /// use juggernaut::sample::Sample;
+    /// use juggernaut::nl::NeuralLayer;
+    /// use juggernaut::nn::NeuralNetwork;
+    /// use juggernaut::activation::Activation;
+    /// use juggernaut::activation::Sigmoid;
+    ///
+    /// let dataset = vec![Sample::new(vec![1f64, 0f64], vec![0f64])];
+    /// let mut test = NeuralNetwork::new(dataset, Sigmoid::new());
+    ///
+    /// assert_eq!(test.get_outputs_count(), 1usize);
+    /// # }
+    /// ```
+    pub fn get_outputs_count(&self) -> usize {
+        self.samples[0].get_outputs_count()
     }
 
     /// To add a new layer to the network
@@ -69,10 +95,15 @@ impl<T: Activation> NeuralNetwork<T> {
     /// # }
     /// ```
     pub fn add_layer(&mut self, layer: NeuralLayer) {
+        let mut layers = self.layers.to_owned();
 
-        let prev_layer_neurons: usize = match self.layers.last() {
-            Some(l) => l.neurons,
-            None => self.get_inputs_count() // no hidden layer
+        let prev_layer_neurons: usize = {
+            if layers.len() > 1usize {
+                // 1 for len(), 1 for the output layer
+                layers[layers.len() - 2usize].neurons
+            } else {
+                self.get_inputs_count()
+            }
         };
 
         if prev_layer_neurons != layer.inputs {
@@ -80,10 +111,14 @@ impl<T: Activation> NeuralNetwork<T> {
                    Expected {}, got {}", prev_layer_neurons, layer.inputs);
         }
 
-        self.layers.push(layer);
+        self.layers.insert(layers.len() - 1usize, layer);
     }
 
-    pub fn train(&self) {
+    pub fn forward(&self) {
+
+    }
+
+    pub fn train(&self, epochs: i32) {
 
     }
 }
@@ -110,5 +145,7 @@ mod tests {
         test.add_layer(nl1);
         test.add_layer(nl2);
 
+        assert_eq!(test.get_inputs_count(), 2usize);
+        assert_eq!(test.get_outputs_count(), 1usize);
     }
 }

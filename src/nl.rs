@@ -2,6 +2,8 @@ use matrix::Matrix;
 use matrix::MatrixTrait;
 
 /// Represents a neural layer with its weights
+
+#[derive(Clone)]
 pub struct NeuralLayer {
     pub inputs: usize,
     pub neurons: usize,
