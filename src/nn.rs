@@ -2,6 +2,8 @@ use nl::NeuralLayer;
 use activation::Activation;
 use activation::Sigmoid;
 use sample::Sample;
+use matrix::Matrix;
+use matrix::MatrixTrait;
 
 /// Represents a Neural Network with layers, inputs and outputs
 pub struct NeuralNetwork<T: Activation> {
@@ -114,8 +116,25 @@ impl<T: Activation> NeuralNetwork<T> {
         self.layers.insert(layers.len() - 1usize, layer);
     }
 
-    pub fn forward(&self) {
+    pub fn forward(&self) -> Vec<Matrix> {
+        let mut weights: Vec<Matrix> = vec![];
+        let ref sample = self.samples[0];
+        let last_output: Matrix;
 
+        for (i, layer) in self.layers.iter().enumerate() {
+
+            let first: Matrix;
+
+            if i == 0usize {
+                first = Matrix::from_vec(&sample.inputs);
+            } else {
+                first = last_output;
+            }
+
+            last_output = layer.weights.dot(first);
+        }
+
+        weights
     }
 
     pub fn train(&self, epochs: i32) {

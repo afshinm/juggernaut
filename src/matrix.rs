@@ -8,7 +8,8 @@ pub struct Matrix(Vec<Vec<f64>>);
 pub trait MatrixTrait {
     fn zero(m: usize, n: usize) -> Self;
     fn random(m: usize, n: usize) -> Self;
-    fn generate(m: usize, n: usize, f: &Fn() -> f64) -> Self;
+    fn from_vec(v: &Vec<f64>) -> Self;
+    fn generate(m: usize, n: usize, f: &Fn(usize, usize) -> f64) -> Self;
     fn rows(&self) -> usize;
     fn cols(&self) -> usize;
     fn get(&self, m: usize, n: usize) -> f64;
@@ -17,14 +18,14 @@ pub trait MatrixTrait {
 
 impl MatrixTrait for Matrix {
     /// Returns a vector with `m` rows and `n` columns
-    fn generate(m: usize, n: usize, f: &Fn() -> f64) -> Matrix {
+    fn generate(m: usize, n: usize, f: &Fn(usize, usize) -> f64) -> Matrix {
         let mut mtx: Vec<Vec<f64>> = Vec::with_capacity(m);
 
         for _ in 0..m {
             let mut row: Vec<f64> = Vec::with_capacity(n);
 
             for _ in 0..n {
-                row.push(f());
+                row.push(f(m, n));
             }
 
             mtx.push(row);
@@ -35,12 +36,17 @@ impl MatrixTrait for Matrix {
 
     /// Returns a vector with `m` rows and `n` columns with elements of 0
     fn zero(m: usize, n: usize) -> Matrix {
-        Matrix::generate(m, n, &|| 0f64)
+        Matrix::generate(m, n, &|_,_| 0f64)
     }
 
     /// Returns a vector with `m` rows and `n` columns with random elements
     fn random(m: usize, n: usize) -> Matrix {
-        Matrix::generate(m, n, &|| rand::thread_rng().gen_range(-1f64, 1f64))
+        Matrix::generate(m, n, &|_,_| rand::thread_rng().gen_range(-1f64, 1f64))
+    }
+
+    /// Generates Matrix from a vector
+    fn from_vec(v: &Vec<f64>) -> Matrix {
+        Matrix::generate(1, v.len(), &|n,m| m as f64)
     }
 
     /// Number of the Matrix rows
@@ -127,5 +133,16 @@ mod tests {
         let result = Matrix(vec![vec![2f64, 4f64], vec![7f64, 10f64]]);
 
         assert_eq!(b.dot(a), result);
+    }
+
+    #[test]
+    fn from_vec() {
+        let v: Vec<f64> = vec![5f64, 1f64];
+
+        let test = Matrix::from_vec(&v);
+
+        let result = Matrix(vec![vec![5f64, 1f64]]);
+
+        assert_eq!(test, result);
     }
 }
