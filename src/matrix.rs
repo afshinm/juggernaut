@@ -21,11 +21,11 @@ impl MatrixTrait for Matrix {
     fn generate(m: usize, n: usize, f: &Fn(usize, usize) -> f64) -> Matrix {
         let mut mtx: Vec<Vec<f64>> = Vec::with_capacity(m);
 
-        for _ in 0..m {
+        for i in 0..m {
             let mut row: Vec<f64> = Vec::with_capacity(n);
 
-            for _ in 0..n {
-                row.push(f(m, n));
+            for j in 0..n {
+                row.push(f(i, j));
             }
 
             mtx.push(row);
@@ -46,7 +46,7 @@ impl MatrixTrait for Matrix {
 
     /// Generates Matrix from a vector
     fn from_vec(v: &Vec<f64>) -> Matrix {
-        Matrix::generate(1, v.len(), &|n,m| m as f64)
+        Matrix::generate(1, v.len(), &|_,n| v[n])
     }
 
     /// Number of the Matrix rows
