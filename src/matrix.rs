@@ -13,7 +13,7 @@ pub trait MatrixTrait {
     fn rows(&self) -> usize;
     fn cols(&self) -> usize;
     fn get(&self, m: usize, n: usize) -> f64;
-    fn dot(&self, b: Matrix) -> Matrix;
+    fn dot(&self, b: &Matrix) -> Matrix;
 }
 
 impl MatrixTrait for Matrix {
@@ -61,13 +61,13 @@ impl MatrixTrait for Matrix {
 
     /// Returns the element in the position M,N
     fn get(&self, m: usize, n: usize) -> f64 {
-        assert!(self.rows() >= m && self.cols() >= n);
+        assert!(self.rows() > m && self.cols() > n);
 
         self.0[m][n]
     }
 
     /// Multiplication with Matrix
-    fn dot(&self, b: Matrix) -> Matrix {
+    fn dot(&self, b: &Matrix) -> Matrix {
         assert_eq!(self.rows(), b.cols());
 
         let mut result: Matrix = Matrix::zero(self.rows(), b.cols());
@@ -123,7 +123,7 @@ mod tests {
         let b = Matrix(vec![vec![2f64, 0f64], vec![1f64, 2f64]]);
         let result = Matrix(vec![vec![4f64, 4f64], vec![10f64, 8f64]]);
 
-        assert_eq!(a.dot(b), result);
+        assert_eq!(a.dot(&b), result);
     }
 
     #[test]
@@ -132,7 +132,16 @@ mod tests {
         let b = Matrix(vec![vec![2f64, 0f64], vec![1f64, 2f64]]);
         let result = Matrix(vec![vec![2f64, 4f64], vec![7f64, 10f64]]);
 
-        assert_eq!(b.dot(a), result);
+        assert_eq!(b.dot(&a), result);
+    }
+
+    #[test]
+    fn random_mul_test3() {
+        let a = Matrix(vec![vec![1f64, 2f64, 3f64], vec![4f64, 5f64, 6f64]]);
+        let b = Matrix(vec![vec![7f64, 8f64], vec![9f64, 10f64], vec![11f64, 12f64]]);
+        let result = Matrix(vec![vec![58f64, 64f64], vec![139f64, 154f64]]);
+
+        assert_eq!(a.dot(&b), result);
     }
 
     #[test]
