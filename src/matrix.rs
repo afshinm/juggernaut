@@ -14,6 +14,7 @@ pub trait MatrixTrait {
     fn cols(&self) -> usize;
     fn get(&self, m: usize, n: usize) -> f64;
     fn dot(&self, b: &Matrix) -> Matrix;
+    fn transpose(&self) -> Matrix;
 }
 
 impl MatrixTrait for Matrix {
@@ -87,6 +88,11 @@ impl MatrixTrait for Matrix {
 
         result
     }
+
+    /// Transpose of a Matrix
+    fn transpose(&self) -> Matrix {
+        return Matrix::generate(self.cols(), self.rows(), &|m,n| self.get(n,m));
+    }
 }
 
 #[cfg(test)]
@@ -153,5 +159,13 @@ mod tests {
         let result = Matrix(vec![vec![5f64, 1f64]]);
 
         assert_eq!(test, result);
+    }
+
+    #[test]
+    fn transpose() {
+        let a = Matrix(vec![vec![4f64, 7f64, 2f64, 1f64], vec![3f64, 9f64, 8f64, 6f64]]);
+        let b = Matrix(vec![vec![4f64, 3f64], vec![7f64, 9f64], vec![2f64, 8f64], vec![1f64, 6f64]]);
+
+        assert_eq!(a.transpose(), b);
     }
 }
