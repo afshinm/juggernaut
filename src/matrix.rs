@@ -15,6 +15,7 @@ pub trait MatrixTrait {
     fn get(&self, m: usize, n: usize) -> f64;
     fn dot(&self, b: &Matrix) -> Matrix;
     fn transpose(&self) -> Matrix;
+    fn map(&self, f: &Fn(f64) -> f64) -> Matrix;
 }
 
 impl MatrixTrait for Matrix {
@@ -92,6 +93,11 @@ impl MatrixTrait for Matrix {
     /// Transpose of a Matrix
     fn transpose(&self) -> Matrix {
         return Matrix::generate(self.cols(), self.rows(), &|m,n| self.get(n,m));
+    }
+
+    /// Map
+    fn map(&self, f: &Fn(f64) -> f64) -> Matrix {
+        return Matrix::generate(self.rows(), self.cols(), &|m,n| f(self.get(m, n)))
     }
 }
 
