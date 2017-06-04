@@ -2,7 +2,7 @@ extern crate rand;
 
 use rand::Rng;
 
-#[derive(Debug, Clone, PartialEq, Copy)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Matrix(Vec<Vec<f64>>);
 
 pub trait MatrixTrait {
