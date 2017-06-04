@@ -2,7 +2,7 @@ extern crate rand;
 
 use rand::Rng;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub struct Matrix(Vec<Vec<f64>>);
 
 pub trait MatrixTrait {
@@ -69,7 +69,7 @@ impl MatrixTrait for Matrix {
 
     /// Multiplication with Matrix
     fn dot(&self, b: &Matrix) -> Matrix {
-        assert_eq!(self.rows(), b.cols());
+        assert_eq!(self.cols(), b.rows());
 
         let mut result: Matrix = Matrix::zero(self.rows(), b.cols());
 
@@ -146,6 +146,22 @@ mod tests {
         let a = Matrix(vec![vec![1f64, 2f64, 3f64], vec![4f64, 5f64, 6f64]]);
         let b = Matrix(vec![vec![7f64, 8f64], vec![9f64, 10f64], vec![11f64, 12f64]]);
         let result = Matrix(vec![vec![58f64, 64f64], vec![139f64, 154f64]]);
+
+        assert_eq!(a.dot(&b), result);
+    }
+
+    #[test]
+    fn random_mul_test4() {
+        let a = Matrix(vec![
+           vec![1f64, 0f64]
+        ]);
+
+        let b = Matrix(vec![
+           vec![3f64, 4f64, 5f64],
+           vec![2f64, 3f64, 5f64]
+        ]);
+
+        let result = Matrix(vec![vec![3f64, 4f64, 5f64]]);
 
         assert_eq!(a.dot(&b), result);
     }
