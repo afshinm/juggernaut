@@ -203,6 +203,8 @@ mod tests {
     use activation::Activation;
     use sample::Sample;
     use nl::NeuralLayer;
+    use matrix::Matrix;
+    use matrix::MatrixTrait;
 
     #[test]
     fn new_neural_network_test() {
@@ -233,6 +235,20 @@ mod tests {
 
         let forward = test.forward(&test.samples);
         assert_eq!(forward.len(), 1);
+    }
+
+    #[test]
+    fn output_delta_test() {
+        let dataset = vec![Sample::new(vec![1f64, 0f64], vec![1f64])];
+
+        let mut test = NeuralNetwork::new(dataset, Sigmoid::new());
+
+        let mock_output = vec![Matrix::zero(1, 1)];
+
+        let output_delta = test.output_delta(&test.samples, &mock_output);
+
+        assert_eq!(output_delta.len(), 1);
+        assert_eq!(output_delta[0].get(0,0), 1f64);
     }
 
     #[test]
