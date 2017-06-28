@@ -1,5 +1,6 @@
 /// A sample of the given dataset
 
+#[derive(Debug)]
 pub struct Sample {
     pub inputs: Vec<f64>,
     pub outputs: Vec<f64>

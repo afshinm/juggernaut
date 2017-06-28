@@ -121,14 +121,16 @@ impl<T: Activation> NeuralNetwork<T> {
 
     /// This is the forward method of the network which calculates the random weights
     /// and multiplies the inputs of given samples to the weights matrix. Thinks.
-    pub fn forward(&self) -> Vec<Matrix> {
+    pub fn forward(&self, samples: &Vec<Sample>) -> Vec<Matrix> {
         if self.layers.len() == 0 {
             panic!("Neural network doesn't have any layers.");
         }
 
+        // TODO (afshinm): is this correct to store weights in a vector of Matrix?
+        // another idea: storing as a vector of f64s
         let mut weights: Vec<Matrix> = vec![];
 
-        for sample in self.samples.iter() {
+        for sample in samples.iter() {
             let mut prev_weight: Matrix = Matrix::zero(0, 0);
 
             for (i, layer) in self.layers.iter().enumerate() {
@@ -144,11 +146,15 @@ impl<T: Activation> NeuralNetwork<T> {
                     }
 
                 } else {
+                    // first layer (first iteration)
                     let mut first: Matrix = Matrix::from_vec(&sample.inputs);
 
                     if self.layers.len() == 1 {
+                        // does the network have only one layer?
                         weights.push(first.dot(&layer.weights));
                     } else {
+                        // more than one layer
+                        // storing the result for the next iteration
                         prev_weight = first.dot(&layer.weights);
                     }
                 }
@@ -158,8 +164,35 @@ impl<T: Activation> NeuralNetwork<T> {
         weights
     }
 
-    pub fn train(&self, epochs: i32) {
+    /// Caculates the delta of `forward` step with given samples
+    /// Used for training step
+    fn output_delta(&self, samples: &Vec<Sample>, forward_output: &Vec<Matrix>) -> Vec<Matrix> {
+        let mut delta: Vec<Matrix> = vec![];
 
+        // assumed that samples and forward_output is in the same order
+        for (i, sample) in samples.iter().enumerate() {
+            // single output of forward pass
+            let this_forward_output: &Matrix = &forward_output[i];
+
+            // TODO (afshinm): is this correct to store the delta in a vector
+            // and then covert it to a Matrix? or maybe we should use Matrix and push elements.
+            let mut this_delta: Vec<f64> = vec![];
+
+            for (j, output) in sample.outputs.iter().enumerate() {
+                this_delta.push(output - this_forward_output.get(0, j));
+            }
+
+            delta.push(Matrix::from_vec(&this_delta));
+        }
+
+        delta
+    }
+
+    pub fn train(&self, epochs: i32) {
+        for _ in 0..epochs {
+            let output: Vec<Matrix> = self.forward(&self.samples);
+            let delta = self.output_delta(&self.samples, &output);
+        }
     }
 }
 
@@ -198,7 +231,7 @@ mod tests {
         // 1st layer = 1 neurons - 2 inputs
         test.add_layer(NeuralLayer::new(1, 2));
 
-        let forward = test.forward();
+        let forward = test.forward(&test.samples);
         assert_eq!(forward.len(), 1);
     }
 
@@ -213,7 +246,23 @@ mod tests {
         // 2nd layer = 1 neuron - 3 inputs
         test.add_layer(NeuralLayer::new(1, 3));
 
-        let forward = test.forward();
+        let forward = test.forward(&test.samples);
+
+        assert_eq!(forward.len(), 1);
+    }
+
+    #[test]
+    fn train_test() {
+        let dataset = vec![Sample::new(vec![1f64, 0f64], vec![0f64])];
+
+        let mut test = NeuralNetwork::new(dataset, Sigmoid::new());
+
+        // 1st layer = 1 neurons - 2 inputs
+        test.add_layer(NeuralLayer::new(1, 2));
+
+        let forward = test.forward(&test.samples);
+
+        test.train(1000);
 
         assert_eq!(forward.len(), 1);
     }
