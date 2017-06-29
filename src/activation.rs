@@ -2,9 +2,9 @@
 pub trait Activation {
     fn new() -> Self;
     // the function itself
-    fn calc(x: f64) -> f64;
+    fn calc(&self, x: f64) -> f64;
     // Derivative
-    fn derivative(x: f64) -> f64;
+    fn derivative(&self, x: f64) -> f64;
 }
 
 pub struct Sigmoid;
@@ -15,12 +15,12 @@ impl Activation for Sigmoid {
     }
 
     /// Calculates the Sigmoid of input `x`
-    fn calc(x: f64) -> f64 {
+    fn calc(&self, x: f64) -> f64 {
         1f64 / (1f64 + (-x).exp())
     }
 
     /// Calculates the Derivative Sigmoid of input `x`
-    fn derivative(x: f64) -> f64 {
+    fn derivative(&self, x: f64) -> f64 {
         x * (1f64 - x)
     }
 }
@@ -32,11 +32,13 @@ mod tests {
 
     #[test]
     fn sigmoid_test() {
-        assert_approx_eq!(Sigmoid::calc(5f64), 0.9933071490f64);
+        let activation = Sigmoid::new();
+        assert_approx_eq!(activation.calc(5f64), 0.9933071490f64);
     }
 
     #[test]
     fn sigmoid_derivative_test() {
-        assert_approx_eq!(Sigmoid::derivative(5f64), -20f64);
+        let activation = Sigmoid::new();
+        assert_approx_eq!(activation.derivative(5f64), -20f64);
     }
 }

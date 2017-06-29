@@ -140,7 +140,7 @@ impl<T: Activation> NeuralNetwork<T> {
                 if i > 0 {
                     if i == self.layers.len() - 1 {
                         // last iteration
-                        weights.push(prev_weight.dot(&layer.weights));
+                        weights.push(prev_weight.dot(&layer.weights).map(&|n| self.activation.calc(n)));
                     } else {
                         prev_weight = prev_weight.dot(&layer.weights);
                     }
