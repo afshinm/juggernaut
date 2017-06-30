@@ -192,6 +192,13 @@ impl<T: Activation> NeuralNetwork<T> {
         for _ in 0..epochs {
             let output: Vec<Matrix> = self.forward(&self.samples);
             let delta = self.output_delta(&self.samples, &output);
+            let mut output_derivative: Vec<Matrix> = vec![];
+
+            // TODO (afshinm): changing the forward output to Matrix (from Vec<Matrix>) removes
+            // this loop
+            for this_output in output {
+                 output_derivative.push(this_output.map(&|n| self.activation.derivative(n)));
+            }
         }
     }
 }
