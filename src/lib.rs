@@ -9,3 +9,4 @@ pub mod activation;
 pub mod nl;
 pub mod nn;
 pub mod sample;
+mod utils;
