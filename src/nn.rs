@@ -4,6 +4,7 @@ use activation::Sigmoid;
 use sample::Sample;
 use matrix::Matrix;
 use matrix::MatrixTrait;
+use utils::samples_input_to_matrix;
 
 /// Represents a Neural Network with layers, inputs and outputs
 pub struct NeuralNetwork<T: Activation> {
@@ -29,52 +30,6 @@ impl<T: Activation> NeuralNetwork<T> {
             layers: initial_layers,
             samples: samples
         }
-    }
-
-    /// Returns the number of inputs for one Sample object
-    ///
-    /// Example:
-    ///
-    /// ```
-    /// # #[macro_use] extern crate juggernaut;
-    /// # fn main() {
-    /// use juggernaut::sample::Sample;
-    /// use juggernaut::nl::NeuralLayer;
-    /// use juggernaut::nn::NeuralNetwork;
-    /// use juggernaut::activation::Activation;
-    /// use juggernaut::activation::Sigmoid;
-    ///
-    /// let dataset = vec![Sample::new(vec![1f64, 0f64], vec![0f64])];
-    /// let mut test = NeuralNetwork::new(dataset, Sigmoid::new());
-    ///
-    /// assert_eq!(test.get_inputs_count(), 2usize);
-    /// # }
-    /// ```
-    pub fn get_inputs_count(&self) -> usize {
-        self.samples[0].get_inputs_count()
-    }
-
-    /// Returns the number of outputs for one Sample object
-    ///
-    /// Example:
-    ///
-    /// ```
-    /// # #[macro_use] extern crate juggernaut;
-    /// # fn main() {
-    /// use juggernaut::sample::Sample;
-    /// use juggernaut::nl::NeuralLayer;
-    /// use juggernaut::nn::NeuralNetwork;
-    /// use juggernaut::activation::Activation;
-    /// use juggernaut::activation::Sigmoid;
-    ///
-    /// let dataset = vec![Sample::new(vec![1f64, 0f64], vec![0f64])];
-    /// let mut test = NeuralNetwork::new(dataset, Sigmoid::new());
-    ///
-    /// assert_eq!(test.get_outputs_count(), 1usize);
-    /// # }
-    /// ```
-    pub fn get_outputs_count(&self) -> usize {
-        self.samples[0].get_outputs_count()
     }
 
     /// To add a new layer to the network
@@ -107,7 +62,7 @@ impl<T: Activation> NeuralNetwork<T> {
                 // 1 for len()
                 layers[layers.len() - 1].neurons
             } else {
-                self.get_inputs_count()
+                self.samples[0].get_inputs_count()
             }
         };
 
@@ -126,38 +81,36 @@ impl<T: Activation> NeuralNetwork<T> {
             panic!("Neural network doesn't have any layers.");
         }
 
-        // TODO (afshinm): is this correct to store weights in a vector of Matrix?
-        // another idea: storing as a vector of f64s
         let mut weights: Vec<Matrix> = vec![];
 
-        for sample in samples.iter() {
-            let mut prev_weight: Matrix = Matrix::zero(0, 0);
+        let mut prev_weight: Matrix = Matrix::zero(0, 0);
 
-            for (i, layer) in self.layers.iter().enumerate() {
-                // TODO: this part is ridiculously complicated, needs refactoring.
-                // and the reason is Rust's lifetime. clean this part, please.
+        for (i, layer) in self.layers.iter().enumerate() {
+            // TODO: this part is ridiculously complicated, needs refactoring.
+            // and the reason is Rust's lifetime. clean this part, please.
 
-                if i > 0 {
-                    if i == self.layers.len() - 1 {
-                        // last iteration
-                        weights.push(prev_weight.dot(&layer.weights).map(&|n| self.activation.calc(n)));
-                    } else {
-                        prev_weight = prev_weight.dot(&layer.weights);
-                    }
+            if i > 0 {
+                let mult: Matrix = prev_weight.dot(&layer.weights).map(&|n| self.activation.calc(n));
 
-                } else {
-                    // first layer (first iteration)
-                    let mut first: Matrix = Matrix::from_vec(&sample.inputs);
-
-                    if self.layers.len() == 1 {
-                        // does the network have only one layer?
-                        weights.push(first.dot(&layer.weights));
-                    } else {
-                        // more than one layer
-                        // storing the result for the next iteration
-                        prev_weight = first.dot(&layer.weights);
-                    }
+                if i != self.layers.len() - 1 {
+                    prev_weight = mult.clone();
                 }
+
+                weights.push(mult);
+
+            } else {
+                // first layer (first iteration)
+                let samples_input: Matrix = samples_input_to_matrix(&samples);
+
+                let mult: Matrix = samples_input.dot(&layer.weights).map(&|n| self.activation.calc(n));
+
+                if self.layers.len() > 1 {
+                    // more than one layer
+                    // storing the result for the next iteration
+                    prev_weight = mult.clone();
+                }
+
+                weights.push(mult);
             }
         }
 
@@ -191,14 +144,39 @@ impl<T: Activation> NeuralNetwork<T> {
     pub fn train(&self, epochs: i32) {
         for _ in 0..epochs {
             let output: Vec<Matrix> = self.forward(&self.samples);
-            let delta = self.output_delta(&self.samples, &output);
+
+            println!("foward {:?}", output);
+
+            let error: Vec<Matrix> = self.output_delta(&self.samples, &output);
             let mut output_derivative: Vec<Matrix> = vec![];
+            let mut derivative_error: Vec<f64> = vec![];
+
+
+            //println!("error {:?}", error);
 
             // TODO (afshinm): changing the forward output to Matrix (from Vec<Matrix>) removes
-            // this loop
+            // this loop. e.g. `sigmoid_derivative(output)`
             for this_output in output {
                  output_derivative.push(this_output.map(&|n| self.activation.derivative(n)));
             }
+
+            for (i, derivative) in output_derivative.iter().enumerate() {
+                // TODO (afshinm): what if the output is more then one?
+                // should we use matrix.dot?
+                derivative_error.push(derivative.get(0,0) * error[i].get(0,0));
+            }
+
+            let matrix_of_inputs: Matrix = samples_input_to_matrix(&self.samples);
+            let matrix_of_derivative: Matrix = Matrix::from_vec(&derivative_error);
+
+            //println!("output_derivative {:?}", output_derivative);
+            //println!("error * der {:?}", derivative_error);
+            println!("samples {:?}", matrix_of_inputs);
+            println!("derivative error {:?}", matrix_of_derivative);
+
+            let adjustment: Matrix = matrix_of_derivative.dot(&matrix_of_inputs);
+
+            println!("adjustment {:?}", adjustment);
         }
     }
 }
@@ -227,8 +205,8 @@ mod tests {
         test.add_layer(nl1);
         test.add_layer(nl2);
 
-        assert_eq!(test.get_inputs_count(), 2usize);
-        assert_eq!(test.get_outputs_count(), 1usize);
+        //assert_eq!(test.get_inputs_count(), 2usize);
+        //assert_eq!(test.get_outputs_count(), 1usize);
     }
 
     #[test]
@@ -271,7 +249,7 @@ mod tests {
 
         let forward = test.forward(&test.samples);
 
-        assert_eq!(forward.len(), 1);
+        assert_eq!(forward.len(), 2);
     }
 
     #[test]
@@ -285,8 +263,30 @@ mod tests {
 
         let forward = test.forward(&test.samples);
 
-        test.train(1000);
+        test.train(10);
 
         assert_eq!(forward.len(), 1);
     }
+
+    /*
+    #[test]
+    fn train_test_2layers() {
+        let dataset = vec![
+            Sample::new(vec![1f64, 0f64], vec![0f64]),
+            Sample::new(vec![1f64, 1f64], vec![1f64])
+        ];
+
+        let mut test = NeuralNetwork::new(dataset, Sigmoid::new());
+
+        // 1st layer = 3 neurons - 2 inputs
+        test.add_layer(NeuralLayer::new(3, 2));
+        // 2nd layer = 1 neuron - 3 inputs
+        test.add_layer(NeuralLayer::new(1, 3));
+
+        let forward = test.forward(&test.samples);
+
+        test.train(1);
+
+        assert_eq!(forward.len(), 2);
+    }*/
 }

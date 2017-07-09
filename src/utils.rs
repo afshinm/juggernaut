@@ -2,7 +2,7 @@ use sample::Sample;
 use matrix::Matrix;
 use matrix::MatrixTrait;
 
-pub fn samples_to_matrix(samples: &Vec<Sample>) -> Matrix {
+pub fn samples_input_to_matrix(samples: &Vec<Sample>) -> Matrix {
     let mut f64_vec: Vec<Vec<f64>> = vec![];
 
     for sample in samples.iter() {
