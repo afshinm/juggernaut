@@ -143,11 +143,29 @@ impl<T: Activation> NeuralNetwork<T> {
 
     pub fn train(&self, epochs: i32) {
         for _ in 0..epochs {
-            let output: Vec<Matrix> = self.forward(&self.samples);
+            let mut output: Vec<Matrix> = self.forward(&self.samples);
+            output.reverse();
 
-            println!("foward {:?}", output);
+            for (i, layer) in output.iter().enumerate() {
+                println!("one {:?}", layer);
 
-            let error: Vec<Matrix> = self.output_delta(&self.samples, &output);
+                // because it is different when we want to calculate error for each layer for the
+                // output layer it is:
+                //
+                //      y - output_layer
+                //
+                // but for other layers it is:
+                //
+                //      output_delta.dot(weights_1)
+                //
+                if (i == 0) {
+                    //last layer (output)
+                    let error: Matrix = self.output_delta(&self.samples, &output);
+                } else {
+
+                }
+            }
+
             let mut output_derivative: Vec<Matrix> = vec![];
             let mut derivative_error: Vec<f64> = vec![];
 
@@ -190,6 +208,8 @@ mod tests {
     use nl::NeuralLayer;
     use matrix::Matrix;
     use matrix::MatrixTrait;
+
+    /*
 
     #[test]
     fn new_neural_network_test() {
@@ -268,7 +288,8 @@ mod tests {
         assert_eq!(forward.len(), 1);
     }
 
-    /*
+    */
+
     #[test]
     fn train_test_2layers() {
         let dataset = vec![
@@ -288,5 +309,5 @@ mod tests {
         test.train(1);
 
         assert_eq!(forward.len(), 2);
-    }*/
+    }
 }
