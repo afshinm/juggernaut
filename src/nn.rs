@@ -5,6 +5,7 @@ use sample::Sample;
 use matrix::Matrix;
 use matrix::MatrixTrait;
 use utils::samples_input_to_matrix;
+use utils::samples_output_to_matrix;
 
 /// Represents a Neural Network with layers, inputs and outputs
 pub struct NeuralNetwork<T: Activation> {
@@ -117,33 +118,11 @@ impl<T: Activation> NeuralNetwork<T> {
         weights
     }
 
-    /// Caculates the delta of `forward` step with given samples
-    /// Used for training step
-    fn output_delta(&self, samples: &Vec<Sample>, forward_output: &Vec<Matrix>) -> Vec<Matrix> {
-        let mut delta: Vec<Matrix> = vec![];
-
-        // assumed that samples and forward_output is in the same order
-        for (i, sample) in samples.iter().enumerate() {
-            // single output of forward pass
-            let this_forward_output: &Matrix = &forward_output[i];
-
-            // TODO (afshinm): is this correct to store the delta in a vector
-            // and then covert it to a Matrix? or maybe we should use Matrix and push elements.
-            let mut this_delta: Vec<f64> = vec![];
-
-            for (j, output) in sample.outputs.iter().enumerate() {
-                this_delta.push(output - this_forward_output.get(0, j));
-            }
-
-            delta.push(Matrix::from_vec(&this_delta));
-        }
-
-        delta
-    }
-
     pub fn train(&self, epochs: i32) {
         for _ in 0..epochs {
             let mut output: Vec<Matrix> = self.forward(&self.samples);
+            println!("output {:?}", output);
+
             output.reverse();
 
             for (i, layer) in output.iter().enumerate() {
@@ -160,12 +139,23 @@ impl<T: Activation> NeuralNetwork<T> {
                 //
                 if (i == 0) {
                     //last layer (output)
-                    let error: Matrix = self.output_delta(&self.samples, &output);
+                    let samples_outputs: Matrix = samples_output_to_matrix(&self.samples);
+
+                    // this is:
+                    //
+                    //     y - last_layer_of_forward
+                    //
+                    let error: Matrix = Matrix::generate(
+                        samples_outputs.rows(),
+                        samples_outputs.cols(),
+                        &|m,n| samples_outputs.get(m,n) - layer.get(m,n)
+                    );
                 } else {
 
                 }
             }
 
+            /*
             let mut output_derivative: Vec<Matrix> = vec![];
             let mut derivative_error: Vec<f64> = vec![];
 
@@ -195,6 +185,7 @@ impl<T: Activation> NeuralNetwork<T> {
             let adjustment: Matrix = matrix_of_derivative.dot(&matrix_of_inputs);
 
             println!("adjustment {:?}", adjustment);
+            */
         }
     }
 }
