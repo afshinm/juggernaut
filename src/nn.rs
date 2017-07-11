@@ -118,16 +118,17 @@ impl<T: Activation> NeuralNetwork<T> {
         weights
     }
 
-    pub fn train(&self, epochs: i32) {
+    pub fn train(&mut self, epochs: i32) {
         for _ in 0..epochs {
             let mut output: Vec<Matrix> = self.forward(&self.samples);
-            println!("output {:?}", output);
 
+            // because we are backpropagating
             output.reverse();
 
-            for (i, layer) in output.iter().enumerate() {
-                println!("one {:?}", layer);
+            let mut error: Matrix = Matrix::zero(0, 0);
+            let mut delta: Matrix = Matrix::zero(0, 0);
 
+            for (i, layer) in output.iter().enumerate() {
                 // because it is different when we want to calculate error for each layer for the
                 // output layer it is:
                 //
@@ -137,7 +138,7 @@ impl<T: Activation> NeuralNetwork<T> {
                 //
                 //      output_delta.dot(weights_1)
                 //
-                if (i == 0) {
+                if i == 0 {
                     //last layer (output)
                     let samples_outputs: Matrix = samples_output_to_matrix(&self.samples);
 
@@ -145,47 +146,46 @@ impl<T: Activation> NeuralNetwork<T> {
                     //
                     //     y - last_layer_of_forward
                     //
-                    let error: Matrix = Matrix::generate(
+                    // where `last_layer_of_forward` is `layer` because of i == 0 condition
+                    //
+                    error = Matrix::generate(
                         samples_outputs.rows(),
                         samples_outputs.cols(),
                         &|m,n| samples_outputs.get(m,n) - layer.get(m,n)
                     );
                 } else {
-
+                    // this is:
+                    //
+                    //     delta_of_previous_layer.dot(layer)
+                    //
+                    error = delta.transpose().dot(&layer);
                 }
+
+                let forward_derivative: Matrix = layer.map(&|n| self.activation.derivative(n));
+                delta = Matrix::generate(layer.rows(), layer.cols(), &|m,n| layer.get(m, n) * forward_derivative.get(m, n));
+
+                let mut prev_layer: Matrix = samples_input_to_matrix(&self.samples);
+
+                if i != output.len() - 1 {
+                    // TODO (afshinm): is this necessary to clone here?
+                    prev_layer = output[output.len() - i - 1].clone();
+                }
+
+                // updating weights of this layer
+                let syn: Matrix = prev_layer.transpose().dot(&delta);
+
+                let index: usize = self.layers.len() - 1 - i;
+                // forward output and network layers are the same, with a reversed order
+                // TODO (afshinm): is this necessary to clone here?
+                let this_layer_weights: Matrix = self.layers[index].weights.clone();
+
+                // finally, set the new weights
+                self.layers[index].weights = Matrix::generate(
+                    this_layer_weights.rows(),
+                    this_layer_weights.cols(),
+                    &|m,n| syn.get(m, n) + this_layer_weights.get(m, n)
+                );
             }
-
-            /*
-            let mut output_derivative: Vec<Matrix> = vec![];
-            let mut derivative_error: Vec<f64> = vec![];
-
-
-            //println!("error {:?}", error);
-
-            // TODO (afshinm): changing the forward output to Matrix (from Vec<Matrix>) removes
-            // this loop. e.g. `sigmoid_derivative(output)`
-            for this_output in output {
-                 output_derivative.push(this_output.map(&|n| self.activation.derivative(n)));
-            }
-
-            for (i, derivative) in output_derivative.iter().enumerate() {
-                // TODO (afshinm): what if the output is more then one?
-                // should we use matrix.dot?
-                derivative_error.push(derivative.get(0,0) * error[i].get(0,0));
-            }
-
-            let matrix_of_inputs: Matrix = samples_input_to_matrix(&self.samples);
-            let matrix_of_derivative: Matrix = Matrix::from_vec(&derivative_error);
-
-            //println!("output_derivative {:?}", output_derivative);
-            //println!("error * der {:?}", derivative_error);
-            println!("samples {:?}", matrix_of_inputs);
-            println!("derivative error {:?}", matrix_of_derivative);
-
-            let adjustment: Matrix = matrix_of_derivative.dot(&matrix_of_inputs);
-
-            println!("adjustment {:?}", adjustment);
-            */
         }
     }
 }
@@ -199,8 +199,6 @@ mod tests {
     use nl::NeuralLayer;
     use matrix::Matrix;
     use matrix::MatrixTrait;
-
-    /*
 
     #[test]
     fn new_neural_network_test() {
@@ -231,20 +229,6 @@ mod tests {
 
         let forward = test.forward(&test.samples);
         assert_eq!(forward.len(), 1);
-    }
-
-    #[test]
-    fn output_delta_test() {
-        let dataset = vec![Sample::new(vec![1f64, 0f64], vec![1f64])];
-
-        let mut test = NeuralNetwork::new(dataset, Sigmoid::new());
-
-        let mock_output = vec![Matrix::zero(1, 1)];
-
-        let output_delta = test.output_delta(&test.samples, &mock_output);
-
-        assert_eq!(output_delta.len(), 1);
-        assert_eq!(output_delta[0].get(0,0), 1f64);
     }
 
     #[test]
@@ -279,8 +263,6 @@ mod tests {
         assert_eq!(forward.len(), 1);
     }
 
-    */
-
     #[test]
     fn train_test_2layers() {
         let dataset = vec![
@@ -297,7 +279,7 @@ mod tests {
 
         let forward = test.forward(&test.samples);
 
-        test.train(1);
+        test.train(5);
 
         assert_eq!(forward.len(), 2);
     }
