@@ -158,11 +158,11 @@ impl<T: Activation> NeuralNetwork<T> {
                     //
                     //     delta_of_previous_layer.dot(layer)
                     //
-                    error = delta.transpose().dot(&layer);
+                    error = delta.dot(&self.layers[i].weights.clone().transpose());
                 }
 
                 let forward_derivative: Matrix = layer.map(&|n| self.activation.derivative(n));
-                delta = Matrix::generate(layer.rows(), layer.cols(), &|m,n| layer.get(m, n) * forward_derivative.get(m, n));
+                delta = Matrix::generate(layer.rows(), layer.cols(), &|m,n| error.get(m, n) * forward_derivative.get(m, n));
 
                 let mut prev_layer: Matrix = samples_input_to_matrix(&self.samples);
 
@@ -177,7 +177,7 @@ impl<T: Activation> NeuralNetwork<T> {
                 let index: usize = self.layers.len() - 1 - i;
                 // forward output and network layers are the same, with a reversed order
                 // TODO (afshinm): is this necessary to clone here?
-                let this_layer_weights: Matrix = self.layers[index].weights.clone();
+                let this_layer_weights: &Matrix = &self.layers[index].weights.clone();
 
                 // finally, set the new weights
                 self.layers[index].weights = Matrix::generate(
@@ -280,6 +280,35 @@ mod tests {
         let forward = test.forward(&test.samples);
 
         test.train(5);
+
+        assert_eq!(forward.len(), 2);
+    }
+
+    #[test]
+    fn train_test_2layers_think() {
+        let dataset = vec![
+            Sample::new(vec![0f64, 0f64, 1f64], vec![0f64]),
+            Sample::new(vec![0f64, 1f64, 1f64], vec![0f64]),
+            Sample::new(vec![1f64, 0f64, 1f64], vec![1f64]),
+            Sample::new(vec![1f64, 1f64, 1f64], vec![1f64])
+        ];
+
+        let think = vec![
+            Sample::new(vec![1f64, 0f64, 1f64], vec![0f64])
+        ];
+
+        let mut test = NeuralNetwork::new(dataset, Sigmoid::new());
+
+        // 1st layer = 3 neurons - 2 inputs
+        test.add_layer(NeuralLayer::new(2, 3));
+        // 2nd layer = 1 neuron - 3 inputs
+        test.add_layer(NeuralLayer::new(1, 2));
+
+        let forward = test.forward(&test.samples);
+
+        test.train(10);
+
+        let think = test.forward(&think);
 
         assert_eq!(forward.len(), 2);
     }

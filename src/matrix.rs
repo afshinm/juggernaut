@@ -20,6 +20,18 @@ pub trait MatrixTrait {
 
 impl MatrixTrait for Matrix {
     /// Returns a vector with `m` rows and `n` columns
+    ///
+    /// Example:
+    ///
+    /// ```
+    /// # #[macro_use] extern crate juggernaut;
+    /// # fn main() {
+    /// use juggernaut::matrix::Matrix;
+    /// use juggernaut::matrix::MatrixTrait;
+    ///
+    /// let matrix = Matrix::generate(2, 2, &|_,_| 2f64);
+    /// # }
+    /// ```
     fn generate(m: usize, n: usize, f: &Fn(usize, usize) -> f64) -> Matrix {
         let mut mtx: Vec<Vec<f64>> = Vec::with_capacity(m);
 
