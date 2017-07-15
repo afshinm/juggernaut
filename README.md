@@ -7,7 +7,7 @@
 
 Want to setup a simple network using Juggernaut? 
 
-This sample creates a XOR binary operation network with one hidden layer:
+This sample creates a random binary operation network with one hidden layer:
 
 ```
 fn main() {
