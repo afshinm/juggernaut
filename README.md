@@ -9,7 +9,7 @@ Want to setup a simple network using Juggernaut?
 
 This sample creates a random binary operation network with one hidden layer:
 
-```
+```rust
 fn main() {
     let dataset = vec![
         Sample::new(vec![0f64, 0f64, 1f64], vec![0f64]),
