@@ -1,0 +1,9 @@
+[package]
+name = "juggernaut-demo"
+version = "0.1.0"
+authors = ["Afshin Mehrabani <afshin.meh@gmail.com>"]
+description = "Juggernaut demo"
+license = "GPL-3.0"
+
+[dependencies]
+juggernaut = "0.2.0"
