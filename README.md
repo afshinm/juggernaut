@@ -1,7 +1,20 @@
-# Juggernaut [![Build Status](https://travis-ci.org/afshinm/juggernaut.svg?branch=master)](https://travis-ci.org/afshinm/juggernaut)
-> Neural Network in Rust
+<img src=’./static/images/art.png’>
 
-# Build
+
+# Juggernaut [![Build Status](https://travis-ci.org/afshinm/juggernaut.svg?branch=master)](https://travis-ci.org/afshinm/juggernaut)
+> Juggernaut is an experimental Neural Network written in Rust
+
+
+# Example
+
+Want to setup a simple network using Juggernaut? Have a look:
+
+```
+
+```
+
+
+# Test
 
 Install Rust 1.x and run:
 
