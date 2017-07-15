@@ -293,22 +293,22 @@ mod tests {
             Sample::new(vec![1f64, 1f64, 1f64], vec![1f64])
         ];
 
-        let think = vec![
+        let think_dataset = vec![
             Sample::new(vec![1f64, 0f64, 1f64], vec![0f64])
         ];
 
         let mut test = NeuralNetwork::new(dataset, Sigmoid::new());
 
-        // 1st layer = 3 neurons - 2 inputs
+        // 1st layer = 2 neurons - 3 inputs
         test.add_layer(NeuralLayer::new(2, 3));
-        // 2nd layer = 1 neuron - 3 inputs
+        // 2nd layer = 1 neuron - 2 inputs
         test.add_layer(NeuralLayer::new(1, 2));
 
         let forward = test.forward(&test.samples);
 
-        test.train(10);
+        test.train(5);
 
-        let think = test.forward(&think);
+        let think = test.forward(&think_dataset);
 
         assert_eq!(forward.len(), 2);
     }
