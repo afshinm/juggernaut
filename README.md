@@ -1,8 +1,11 @@
-<img src=’./static/images/art.png’>
 
 
 # Juggernaut [![Build Status](https://travis-ci.org/afshinm/juggernaut.svg?branch=master)](https://travis-ci.org/afshinm/juggernaut)
 > Juggernaut is an experimental Neural Network written in Rust
+
+<img src="./static/images/art.png" alt="hi" class="inline"/>
+
+
 
 
 # Example
