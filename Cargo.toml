@@ -7,4 +7,4 @@ license = "GPL-3.0"
 
 [dependencies]
 assert_approx_eq = "1.0.0"
-rand = "*"
+rand = "0.3.15"
