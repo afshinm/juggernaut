@@ -118,6 +118,13 @@ impl<T: Activation> NeuralNetwork<T> {
         weights
     }
 
+    pub fn evaluate(&self, sample: Sample) -> Matrix {
+        let forward: Vec<Matrix> = self.forward(&vec![sample]);
+
+        // TODO (afshinm): is this correct to clone here?
+        forward.last().unwrap().clone()
+    }
+
     pub fn train(&mut self, epochs: i32) {
         for _ in 0..epochs {
             let mut output: Vec<Matrix> = self.forward(&self.samples);
@@ -201,24 +208,6 @@ mod tests {
     use matrix::MatrixTrait;
 
     #[test]
-    fn new_neural_network_test() {
-        let dataset = vec![Sample::new(vec![1f64, 0f64], vec![0f64])];
-
-        let mut test = NeuralNetwork::new(dataset, Sigmoid::new());
-
-        // 1st layer = 4 neurons - 2 inputs
-        let nl1 = NeuralLayer::new(4, 2);
-        // 2nd layer = 3 neurons - 4 inputs
-        let nl2 = NeuralLayer::new(3, 4);
-
-        test.add_layer(nl1);
-        test.add_layer(nl2);
-
-        //assert_eq!(test.get_inputs_count(), 2usize);
-        //assert_eq!(test.get_outputs_count(), 1usize);
-    }
-
-    #[test]
     fn forward_test() {
         let dataset = vec![Sample::new(vec![1f64, 0f64], vec![0f64])];
 
@@ -293,10 +282,6 @@ mod tests {
             Sample::new(vec![1f64, 1f64, 1f64], vec![1f64])
         ];
 
-        let think_dataset = vec![
-            Sample::new(vec![1f64, 0f64, 1f64], vec![0f64])
-        ];
-
         let mut test = NeuralNetwork::new(dataset, Sigmoid::new());
 
         // 1st layer = 2 neurons - 3 inputs
@@ -304,12 +289,11 @@ mod tests {
         // 2nd layer = 1 neuron - 2 inputs
         test.add_layer(NeuralLayer::new(1, 2));
 
-        let forward = test.forward(&test.samples);
-
         test.train(5);
 
-        let think = test.forward(&think_dataset);
+        let think = test.evaluate(Sample::predict(vec![1f64, 0f64, 1f64]));
 
-        assert_eq!(forward.len(), 2);
+        assert_eq!(think.rows(), 1);
+        assert_eq!(think.cols(), 1);
     }
 }

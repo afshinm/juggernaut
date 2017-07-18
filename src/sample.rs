@@ -3,14 +3,21 @@
 #[derive(Debug)]
 pub struct Sample {
     pub inputs: Vec<f64>,
-    pub outputs: Vec<f64>
+    pub outputs: Option<Vec<f64>>
 }
 
 impl Sample {
     pub fn new(inputs: Vec<f64>, outputs: Vec<f64>) -> Sample {
         Sample{
             inputs: inputs,
-            outputs: outputs
+            outputs: Some(outputs)
+        }
+    }
+
+    pub fn predict(inputs: Vec<f64>) -> Sample {
+        Sample{
+            inputs: inputs,
+            outputs: None
         }
     }
 
@@ -19,6 +26,9 @@ impl Sample {
     }
 
     pub fn get_outputs_count(&self) -> usize {
-        self.outputs.len()
+        match &self.outputs {
+            &Some(ref outputs) => outputs.len(),
+            &None => 0
+        }
     }
 }
