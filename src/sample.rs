@@ -32,3 +32,33 @@ impl Sample {
         }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn inputs_count() {
+        let sample = Sample::new(vec![1f64, 0f64], vec![0f64]);
+        assert_eq!(sample.get_inputs_count(), 2);
+    }
+
+    #[test]
+    fn outputs_count() {
+        let sample = Sample::new(vec![1f64, 0f64], vec![0f64]);
+        assert_eq!(sample.get_outputs_count(), 1);
+    }
+
+    #[test]
+    fn new_predict_inputs_count() {
+        let sample = Sample::predict(vec![1f64, 0f64]);
+        assert_eq!(sample.get_inputs_count(), 2);
+    }
+
+    #[test]
+    fn new_predict_output_count() {
+        let sample = Sample::predict(vec![1f64, 0f64]);
+        assert_eq!(sample.get_outputs_count(), 0);
+    }
+}
