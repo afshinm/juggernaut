@@ -10,6 +10,7 @@ pub trait MatrixTrait {
     fn random(m: usize, n: usize) -> Self;
     fn from_vec(v: &Vec<f64>) -> Self;
     fn generate(m: usize, n: usize, f: &Fn(usize, usize) -> f64) -> Self;
+    fn row(&self, n: usize) -> &Vec<f64>;
     fn rows(&self) -> usize;
     fn cols(&self) -> usize;
     fn get(&self, m: usize, n: usize) -> f64;
@@ -61,6 +62,11 @@ impl MatrixTrait for Matrix {
     /// Generates Matrix from a vector
     fn from_vec(v: &Vec<f64>) -> Matrix {
         Matrix::generate(1, v.len(), &|_,n| v[n])
+    }
+
+    /// Returns a row of Matrix
+    fn row(&self, n: usize) -> &Vec<f64> {
+        &self.0[n]
     }
 
     /// Number of the Matrix rows

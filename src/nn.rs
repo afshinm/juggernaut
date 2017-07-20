@@ -11,10 +11,12 @@ use utils::samples_output_to_matrix;
 pub struct NeuralNetwork<T: Activation> {
     activation: T,
     layers: Vec<NeuralLayer>,
-    samples: Vec<Sample>
+    samples: Vec<Sample>,
+    error_fn: Option<Box<Fn(f64)>>
 }
 
 impl<T: Activation> NeuralNetwork<T> {
+
     pub fn new(samples: Vec<Sample>, activation: T) -> NeuralNetwork<T>
         where T: Activation
     {
@@ -29,8 +31,17 @@ impl<T: Activation> NeuralNetwork<T> {
         NeuralNetwork {
             activation: activation,
             layers: initial_layers,
-            samples: samples
+            samples: samples,
+            error_fn: None
         }
+    }
+
+    /// To add a callback function and receive the errors of the network during training process
+    /// Please note that there is another function that basically calcualtes the error value
+    pub fn error<FN>(&mut self, callback_fn: FN)
+        where FN: 'static + Fn(f64)
+    {
+        self.error_fn = Some(Box::new(callback_fn));
     }
 
     /// To add a new layer to the network
@@ -118,11 +129,41 @@ impl<T: Activation> NeuralNetwork<T> {
         weights
     }
 
+    /// Use this function to evaluate a trained neural network
+    ///
+    /// This function simply passes the given sample to the `forward` function and returns the
+    /// output of last layer
     pub fn evaluate(&self, sample: Sample) -> Matrix {
         let forward: Vec<Matrix> = self.forward(&vec![sample]);
 
         // TODO (afshinm): is this correct to clone here?
         forward.last().unwrap().clone()
+    }
+
+    /// This function calculates the error of network during training and calls the `error_fn` if
+    /// it is available
+    ///
+    /// This is a private function
+    fn _error(&self, error: &Matrix) -> f64 {
+
+        // calculating the median
+        let mut error_vec: Vec<f64> = error.row(0).clone();
+        error_vec.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        let mid = error_vec.len() / 2;
+
+        let err = (if error_vec.len() % 2 == 0 {
+            (error_vec[mid - 1] + error_vec[mid + 1]) / 2f64
+        } else {
+            error_vec[mid] as f64
+        }).abs();
+
+        // calling the error_fn
+        match self.error_fn {
+            Some(ref err_fn) => err_fn(err),
+            None => ()
+        }
+
+        err
     }
 
     pub fn train(&mut self, epochs: i32) {
@@ -160,6 +201,10 @@ impl<T: Activation> NeuralNetwork<T> {
                         samples_outputs.cols(),
                         &|m,n| samples_outputs.get(m,n) - layer.get(m,n)
                     );
+
+                    // calculating error of this iteration
+                    // and call the error_fn to notify
+                    self._error(&error);
                 } else {
                     // this is:
                     //
@@ -295,5 +340,27 @@ mod tests {
 
         assert_eq!(think.rows(), 1);
         assert_eq!(think.cols(), 1);
+    }
+
+    #[test]
+    fn error_function_test() {
+        let dataset = vec![
+            Sample::new(vec![0f64, 0f64, 1f64], vec![0f64]),
+            Sample::new(vec![0f64, 1f64, 1f64], vec![0f64]),
+            Sample::new(vec![1f64, 0f64, 1f64], vec![1f64]),
+            Sample::new(vec![1f64, 1f64, 1f64], vec![1f64])
+        ];
+
+        let mut test = NeuralNetwork::new(dataset, Sigmoid::new());
+
+        // error should be more than 0
+        test.error(|err| assert!(err > 0f64));
+
+        // 1st layer = 2 neurons - 3 inputs
+        test.add_layer(NeuralLayer::new(2, 3));
+        // 2nd layer = 1 neuron - 2 inputs
+        test.add_layer(NeuralLayer::new(1, 2));
+
+        test.train(5);
     }
 }
