@@ -2,10 +2,13 @@ use activation::Activation;
 
 pub struct RectifiedLinearUnit;
 
-impl Activation for RectifiedLinearUnit {
-    fn new() -> RectifiedLinearUnit {
+impl RectifiedLinearUnit {
+    pub fn new() -> RectifiedLinearUnit {
         return RectifiedLinearUnit;
     }
+}
+
+impl Activation for RectifiedLinearUnit {
 
     /// Calculates the RectifiedLinearUnit of input `x`
     fn calc(&self, x: f64) -> f64 {

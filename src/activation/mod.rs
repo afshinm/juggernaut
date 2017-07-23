@@ -12,7 +12,6 @@ pub use self::rectifiedlinearunit::RectifiedLinearUnit;
 
 /// Activation functions
 pub trait Activation {
-    fn new() -> Self;
     // the function itself
     fn calc(&self, x: f64) -> f64;
     // Derivative
