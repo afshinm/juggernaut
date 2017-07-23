@@ -66,7 +66,7 @@ impl<T: Activation> NeuralNetwork<T> {
     /// # }
     /// ```
     pub fn add_layer(&mut self, layer: NeuralLayer) {
-        let mut layers = self.layers.to_owned();
+        let layers = self.layers.to_owned();
 
         let prev_layer_neurons: usize = {
             if layers.len() > 0 {
