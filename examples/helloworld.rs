@@ -5,6 +5,8 @@ use juggernaut::nn::NeuralNetwork;
 use juggernaut::activation::Activation;
 use juggernaut::activation::Sigmoid;
 use juggernaut::sample::Sample;
+use juggernaut::matrix::MatrixTrait;
+
 
 fn main() {
     println!("Juggernaut...");
@@ -14,10 +16,6 @@ fn main() {
         Sample::new(vec![0f64, 1f64, 1f64], vec![0f64]),
         Sample::new(vec![1f64, 0f64, 1f64], vec![1f64]),
         Sample::new(vec![1f64, 1f64, 1f64], vec![1f64])
-    ];
-
-    let think_dataset = vec![
-        Sample::new(vec![1f64, 0f64, 1f64], vec![0f64])
     ];
 
     println!("Creating the network...");
@@ -36,11 +34,15 @@ fn main() {
 
     println!("Training (60,000 epochs)...");
 
-    test.train(60000);
+    test.error(|err| {
+        println!("error({})", err.to_string());
+    });
+
+    test.train(10000);
 
     println!("Done!!");
 
-    let think = test.forward(&think_dataset);
+    let think = test.evaluate(Sample::predict(vec![1f64, 0f64, 1f64]));
 
-    println!("{:?}", think);
+    println!("Evaluate [1, 0, 1] = {:?}", think.get(0, 0));
 }
