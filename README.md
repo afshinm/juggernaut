@@ -42,6 +42,10 @@ fn main() {
 
 and the output of `think` is the prediction of the network after training.
 
+# Documentation
+
+https://docs.rs/juggernaut
+
 # Build
 
 To build the demo, run:
