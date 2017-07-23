@@ -1,6 +1,5 @@
 use nl::NeuralLayer;
 use activation::Activation;
-use activation::Sigmoid;
 use sample::Sample;
 use matrix::Matrix;
 use matrix::MatrixTrait;
