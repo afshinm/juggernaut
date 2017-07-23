@@ -3,10 +3,13 @@ use activation::Activation;
 
 pub struct SoftPlus;
 
-impl Activation for SoftPlus {
-    fn new() -> SoftPlus {
+impl SoftPlus {
+    pub fn new() -> SoftPlus {
         return SoftPlus;
     }
+}
+
+impl Activation for SoftPlus {
 
     /// Calculates the SoftPlus of input `x`
     fn calc(&self, x: f64) -> f64 {

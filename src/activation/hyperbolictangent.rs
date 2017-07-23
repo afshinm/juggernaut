@@ -3,10 +3,13 @@ use activation::Activation;
 
 pub struct HyperbolicTangent;
 
-impl Activation for HyperbolicTangent {
-    fn new() -> HyperbolicTangent {
+impl HyperbolicTangent {
+    pub fn new() -> HyperbolicTangent {
         return HyperbolicTangent;
     }
+}
+
+impl Activation for HyperbolicTangent {
 
     /// Calculates the tanh of input `x`
     fn calc(&self, x: f64) -> f64 {

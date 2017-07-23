@@ -2,11 +2,14 @@ use activation::Activation;
 
 pub struct Identity;
 
-impl Activation for Identity {
-    fn new() -> Identity {
+impl Identity {
+    pub fn new() -> Identity {
         return Identity;
     }
+}
 
+impl Activation for Identity {
+    
     /// Calculates the Identity of input `x`
     fn calc(&self, x: f64) -> f64 {
         x

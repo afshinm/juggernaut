@@ -2,11 +2,14 @@ use activation::Activation;
 
 pub struct Sigmoid;
 
-impl Activation for Sigmoid {
-    fn new() -> Sigmoid {
+impl Sigmoid {
+    pub fn new() -> Sigmoid {
         return Sigmoid;
     }
+}
 
+impl Activation for Sigmoid {
+    
     /// Calculates the Sigmoid of input `x`
     fn calc(&self, x: f64) -> f64 {
         1f64 / (1f64 + (-x).exp())
