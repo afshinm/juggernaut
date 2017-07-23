@@ -19,7 +19,7 @@ impl<T: Activation> NeuralNetwork<T> {
     pub fn new(samples: Vec<Sample>, activation: T) -> NeuralNetwork<T>
         where T: Activation
     {
-        let mut initial_layers: Vec<NeuralLayer> = vec![];
+        let initial_layers: Vec<NeuralLayer> = vec![];
 
         // adding the first layer, which is a layer that connects inputs to outputs
         //
