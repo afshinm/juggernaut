@@ -17,26 +17,44 @@ fn main() {
         Sample::new(vec![1f64, 0f64, 1f64], vec![1f64]),
         Sample::new(vec![1f64, 1f64, 1f64], vec![1f64])
     ];
-
-    let think_dataset = vec![
-        Sample::new(vec![1f64, 0f64, 1f64], vec![0f64])
-    ];
-
+    
     let mut test = NeuralNetwork::new(dataset, Sigmoid::new());
 
     // 1st layer = 2 neurons - 3 inputs
     test.add_layer(NeuralLayer::new(2, 3));
+
     // 2nd layer = 1 neuron - 2 inputs
     test.add_layer(NeuralLayer::new(1, 2));
 
-    test.train(60000);
+    test.error(|err| {
+        println!("error({})", err.to_string());
+    });
 
-    let think = test.forward(&think_dataset);
+    test.train(10000);
+    
+    let think = test.evaluate(Sample::predict(vec![1f64, 0f64, 1f64]));
+
+    println!("Evaluate [1, 0, 1] = {:?}", think.get(0, 0));
+
 }
 
 ```
 
-and the output of `think` is the prediction of the network after training with 60,000 epochs.
+and the output of `think` is the prediction of the network after training.
+
+# Build
+
+To build the demo, run:
+
+```
+cargo build --example helloworld --verbose
+```
+
+then to run the compiled file:
+
+```
+./target/debug/examples/helloworld
+```
 
 # Test
 
@@ -48,7 +66,7 @@ cargo test
 
 # Author
 
-Afshin Mehrabani (afshin.meh@gmail.com)
+Afshin Mehrabani (afshin.meh@gmail.com) and [contributors](https://github.com/afshinm/juggernaut/graphs/contributors)
 
 # FAQ
 
