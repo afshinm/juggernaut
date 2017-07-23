@@ -172,7 +172,7 @@ impl<T: Activation> NeuralNetwork<T> {
             // because we are backpropagating
             output.reverse();
 
-            let mut error: Matrix = Matrix::zero(0, 0);
+            //let mut error: Matrix = Matrix::zero(0, 0);
             let mut delta: Matrix = Matrix::zero(0, 0);
 
             for (i, layer) in output.iter().enumerate() {
@@ -185,7 +185,7 @@ impl<T: Activation> NeuralNetwork<T> {
                 //
                 //      output_delta.dot(weights_1)
                 //
-                if i == 0 {
+                let error = if i == 0 {
                     //last layer (output)
                     let samples_outputs: Matrix = samples_output_to_matrix(&self.samples);
 
@@ -195,7 +195,7 @@ impl<T: Activation> NeuralNetwork<T> {
                     //
                     // where `last_layer_of_forward` is `layer` because of i == 0 condition
                     //
-                    error = Matrix::generate(
+                    let error = Matrix::generate(
                         samples_outputs.rows(),
                         samples_outputs.cols(),
                         &|m,n| samples_outputs.get(m,n) - layer.get(m,n)
@@ -204,13 +204,14 @@ impl<T: Activation> NeuralNetwork<T> {
                     // calculating error of this iteration
                     // and call the error_fn to notify
                     self._error(&error);
+                    error
                 } else {
                     // this is:
                     //
                     //     delta_of_previous_layer.dot(layer)
                     //
-                    error = delta.dot(&self.layers[i].weights.clone().transpose());
-                }
+                    delta.dot(&self.layers[i].weights.clone().transpose())
+                };
 
                 let forward_derivative: Matrix = layer.map(&|n| self.activation.derivative(n));
                 delta = Matrix::generate(layer.rows(), layer.cols(), &|m,n| error.get(m, n) * forward_derivative.get(m, n));
