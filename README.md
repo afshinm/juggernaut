@@ -18,13 +18,15 @@ fn main() {
         Sample::new(vec![1f64, 1f64, 1f64], vec![1f64])
     ];
     
-    let mut test = NeuralNetwork::new(dataset, Sigmoid::new());
+    let mut test = NeuralNetwork::new(dataset);
+
+    let sig_activation = Sigmoid::new();
 
     // 1st layer = 2 neurons - 3 inputs
-    test.add_layer(NeuralLayer::new(2, 3));
+    test.add_layer(NeuralLayer::new(2, 3, sig_activation));
 
     // 2nd layer = 1 neuron - 2 inputs
-    test.add_layer(NeuralLayer::new(1, 2));
+    test.add_layer(NeuralLayer::new(1, 2, sig_activation));
 
     test.error(|err| {
         println!("error({})", err.to_string());
