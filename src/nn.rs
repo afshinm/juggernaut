@@ -267,11 +267,13 @@ mod tests {
         let dataset = vec![Sample::new(vec![1f64, 0f64], vec![0f64])];
 
         let mut test = NeuralNetwork::new(dataset);
-
+        
+        let sig_activation = Sigmoid::new();
+        
         // 1st layer = 3 neurons - 2 inputs
-        test.add_layer(NeuralLayer::new(3, 2, Sigmoid::new()));
+        test.add_layer(NeuralLayer::new(3, 2, sig_activation));
         // 2nd layer = 1 neuron - 3 inputs
-        test.add_layer(NeuralLayer::new(1, 3, Sigmoid::new()));
+        test.add_layer(NeuralLayer::new(1, 3, sig_activation));
 
         let forward = test.forward(&test.samples);
 
@@ -284,8 +286,10 @@ mod tests {
 
         let mut test = NeuralNetwork::new(dataset);
 
+        let sig_activation = Sigmoid::new();
+
         // 1st layer = 1 neurons - 2 inputs
-        test.add_layer(NeuralLayer::new(1, 2, Sigmoid::new()));
+        test.add_layer(NeuralLayer::new(1, 2, sig_activation));
 
         let forward = test.forward(&test.samples);
 
@@ -303,10 +307,12 @@ mod tests {
 
         let mut test = NeuralNetwork::new(dataset);
 
+        let sig_activation = Sigmoid::new();
+
         // 1st layer = 3 neurons - 2 inputs
-        test.add_layer(NeuralLayer::new(3, 2, Sigmoid::new()));
+        test.add_layer(NeuralLayer::new(3, 2, sig_activation));
         // 2nd layer = 1 neuron - 3 inputs
-        test.add_layer(NeuralLayer::new(1, 3, Sigmoid::new()));
+        test.add_layer(NeuralLayer::new(1, 3, sig_activation));
 
         let forward = test.forward(&test.samples);
 
@@ -326,10 +332,12 @@ mod tests {
 
         let mut test = NeuralNetwork::new(dataset);
 
+        let sig_activation = Sigmoid::new();
+
         // 1st layer = 2 neurons - 3 inputs
-        test.add_layer(NeuralLayer::new(2, 3, Sigmoid::new()));
+        test.add_layer(NeuralLayer::new(2, 3, sig_activation));
         // 2nd layer = 1 neuron - 2 inputs
-        test.add_layer(NeuralLayer::new(1, 2, Sigmoid::new()));
+        test.add_layer(NeuralLayer::new(1, 2, sig_activation));
 
         test.train(5);
 
@@ -352,11 +360,13 @@ mod tests {
 
         // error should be more than 0
         test.error(|err| assert!(err > 0f64));
-
+        
+        let sig_activation = Sigmoid::new();
+        
         // 1st layer = 2 neurons - 3 inputs
-        test.add_layer(NeuralLayer::new(2, 3, Sigmoid::new()));
+        test.add_layer(NeuralLayer::new(2, 3, sig_activation));
         // 2nd layer = 1 neuron - 2 inputs
-        test.add_layer(NeuralLayer::new(1, 2, Sigmoid::new()));
+        test.add_layer(NeuralLayer::new(1, 2, sig_activation));
 
         test.train(5);
     }

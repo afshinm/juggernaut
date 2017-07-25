@@ -21,13 +21,14 @@ fn main() {
 
     let mut test = NeuralNetwork::new(dataset);
 
+    let sig_activation = Sigmoid::new();
     // 1st layer = 2 neurons - 3 inputs
-    test.add_layer(NeuralLayer::new(2, 3, Sigmoid::new()));
+    test.add_layer(NeuralLayer::new(2, 3, sig_activation));
 
     println!("First layer created: 2 neurons 3 inputs");
 
     // 2nd layer = 1 neuron - 2 inputs
-    test.add_layer(NeuralLayer::new(1, 2, Sigmoid::new()));
+    test.add_layer(NeuralLayer::new(1, 2, sig_activation));
 
     println!("Second layer created: 1 neuron 2 inputs");
 
