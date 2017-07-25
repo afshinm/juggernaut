@@ -2,7 +2,6 @@ extern crate juggernaut;
 
 use juggernaut::nl::NeuralLayer;
 use juggernaut::nn::NeuralNetwork;
-use juggernaut::activation::Activation;
 use juggernaut::activation::Sigmoid;
 use juggernaut::sample::Sample;
 use juggernaut::matrix::MatrixTrait;
@@ -20,15 +19,15 @@ fn main() {
 
     println!("Creating the network...");
 
-    let mut test = NeuralNetwork::new(dataset, Sigmoid::new());
+    let mut test = NeuralNetwork::new(dataset);
 
     // 1st layer = 2 neurons - 3 inputs
-    test.add_layer(NeuralLayer::new(2, 3));
+    test.add_layer(NeuralLayer::new(2, 3, Sigmoid::new()));
 
     println!("First layer created: 2 neurons 3 inputs");
 
     // 2nd layer = 1 neuron - 2 inputs
-    test.add_layer(NeuralLayer::new(1, 2));
+    test.add_layer(NeuralLayer::new(1, 2, Sigmoid::new()));
 
     println!("Second layer created: 1 neuron 2 inputs");
 
