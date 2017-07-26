@@ -1,5 +1,6 @@
 use activation::Activation;
 
+#[derive(Copy, Clone)]
 pub struct Identity;
 
 impl Identity {
