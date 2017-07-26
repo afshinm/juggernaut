@@ -38,7 +38,7 @@ fn main() {
         println!("error({})", err.to_string());
     });
 
-    test.train(10000);
+    test.train(1000, 0.1f64);
 
     println!("Done!!");
 
