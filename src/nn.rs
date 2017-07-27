@@ -240,12 +240,10 @@ impl <T: Activation> NeuralNetwork<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use activation::Sigmoid;
-    use activation::Activation;
     use sample::Sample;
     use nl::NeuralLayer;
-    use matrix::Matrix;
+    use nn::NeuralNetwork;
     use matrix::MatrixTrait;
 
     #[test]

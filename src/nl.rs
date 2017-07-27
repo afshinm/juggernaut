@@ -25,9 +25,8 @@ impl<T: Activation> NeuralLayer<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use nl::NeuralLayer;
     use matrix::MatrixTrait;
-    use activation::Activation;
     use activation::Sigmoid;
 
     #[test]
