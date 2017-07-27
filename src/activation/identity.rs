@@ -17,7 +17,7 @@ impl Activation for Identity {
     }
 
     /// Calculates the Derivative Identity of input `x`
-    fn derivative(&self, x: f64) -> f64 {
+    fn derivative(&self, _: f64) -> f64 {
         1f64
     }
 }
