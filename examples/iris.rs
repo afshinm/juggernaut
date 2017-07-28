@@ -74,7 +74,7 @@ fn main() {
 
     println!("Second layer created: 1 neuron 2 inputs");
 
-    println!("Training (60,000 epochs)...");
+    println!("Training (10,000 epochs)...");
 
     test.train(10000, 0.01f64);
 
