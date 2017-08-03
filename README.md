@@ -70,9 +70,12 @@ Install Rust 1.x and run:
 cargo test
 ```
 
-# Author
+# Authors
 
-Afshin Mehrabani (afshin.meh@gmail.com) and [contributors](https://github.com/afshinm/juggernaut/graphs/contributors)
+- Afshin Mehrabani (afshin.meh@gmail.com) 
+- Addtheice https://github.com/addtheice  
+
+and [contributors](https://github.com/afshinm/juggernaut/graphs/contributors)
 
 # FAQ
 
