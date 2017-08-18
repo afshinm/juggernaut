@@ -3,22 +3,23 @@ use matrix::MatrixTrait;
 use activation::Activation;
 
 /// Represents a neural layer with its weights
-
-#[derive(Clone)]
-pub struct NeuralLayer<T: Activation> {
-    pub activation: T,
+pub struct NeuralLayer {
+    pub activation: Box<Activation>,
     pub inputs: usize,
     pub neurons: usize,
-    pub weights: Matrix
+    pub weights: Matrix,
 }
 
-impl<T: Activation> NeuralLayer<T> {
-    pub fn new(neurons: usize, inputs: usize, activation: T) -> NeuralLayer<T> {
+impl NeuralLayer {
+    pub fn new<T: 'static>(neurons: usize, inputs: usize, activation: T) -> NeuralLayer
+    where
+        T: Activation,
+    {
         NeuralLayer {
-            activation: activation,
+            activation: Box::new(activation),
             inputs: inputs,
             neurons: neurons,
-            weights: Matrix::random(inputs, neurons)
+            weights: Matrix::random(inputs, neurons),
         }
     }
 }

@@ -2,19 +2,18 @@ use activation::Activation;
 
 #[derive(Copy, Clone)]
 pub struct LeakyRectifiedLinearUnit {
-    alpha_gradient: f64
+    alpha_gradient: f64,
 }
 
 impl LeakyRectifiedLinearUnit {
     pub fn new(alpha: f64) -> LeakyRectifiedLinearUnit {
         return LeakyRectifiedLinearUnit {
-            alpha_gradient: alpha
+            alpha_gradient: alpha,
         };
     }
 }
 
 impl Activation for LeakyRectifiedLinearUnit {
-
     /// Calculates the LeakyRectifiedLinearUnit of input `x`
     fn calc(&self, x: f64) -> f64 {
         if x <= 0f64 {

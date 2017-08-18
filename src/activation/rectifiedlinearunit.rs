@@ -10,7 +10,6 @@ impl RectifiedLinearUnit {
 }
 
 impl Activation for RectifiedLinearUnit {
-
     /// Calculates the RectifiedLinearUnit of input `x`
     fn calc(&self, x: f64) -> f64 {
         if x <= 0f64 {

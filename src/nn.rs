@@ -7,35 +7,26 @@ use utils::samples_input_to_matrix;
 use utils::samples_output_to_matrix;
 
 /// Represents a Neural Network with layers, inputs and outputs
-pub struct NeuralNetwork<T: Activation> {
-    layers: Vec<NeuralLayer<T> >,
+pub struct NeuralNetwork {
+    layers: Vec<NeuralLayer>,
     samples: Vec<Sample>,
-    error_fn: Option<Box<Fn(f64)>>
+    error_fn: Option<Box<Fn(f64)>>,
 }
 
-impl <T: Activation> NeuralNetwork<T> {
-
-    pub fn new(samples: Vec<Sample>) -> NeuralNetwork<T>
-    {
-        let initial_layers: Vec<NeuralLayer<T> > = vec![];
-
-        // adding the first layer, which is a layer that connects inputs to outputs
-        //
-        // TODO: I commented this line because we have to let user to decide about the layers. do
-        // we need a default layer when user doesn't define the layers?
-        //initial_layers.push(NeuralLayer::new(samples[0].get_outputs_count(), samples[0].get_inputs_count()));
-
+impl NeuralNetwork {
+    pub fn new(samples: Vec<Sample>) -> NeuralNetwork {
         NeuralNetwork {
-            layers: initial_layers,
+            layers: vec![],
             samples: samples,
-            error_fn: None
+            error_fn: None,
         }
     }
 
     /// To add a callback function and receive the errors of the network during training process
     /// Please note that there is another function that basically calcualtes the error value
     pub fn error<FN>(&mut self, callback_fn: FN)
-        where FN: 'static + Fn(f64)
+    where
+        FN: 'static + Fn(f64),
     {
         self.error_fn = Some(Box::new(callback_fn));
     }
@@ -62,8 +53,7 @@ impl <T: Activation> NeuralNetwork<T> {
     /// test.add_layer(nl1);
     /// # }
     /// ```
-    pub fn add_layer(&mut self, layer: NeuralLayer<T>) {
-
+    pub fn add_layer(&mut self, layer: NeuralLayer) {
         let prev_layer_neurons: usize = {
             if self.layers.len() > 0 {
                 // 1 for len()
@@ -74,8 +64,12 @@ impl <T: Activation> NeuralNetwork<T> {
         };
 
         if prev_layer_neurons != layer.inputs {
-            panic!("New layer should have enough inputs. \
-                   Expected {}, got {}", prev_layer_neurons, layer.inputs);
+            panic!(
+                "New layer should have enough inputs. \
+                 Expected {}, got {}",
+                prev_layer_neurons,
+                layer.inputs
+            );
         }
 
         self.layers.push(layer);
@@ -97,7 +91,9 @@ impl <T: Activation> NeuralNetwork<T> {
             // and the reason is Rust's lifetime. clean this part, please.
 
             if i > 0 {
-                let mult: Matrix = prev_weight.dot(&layer.weights).map(&|n| layer.activation.calc(n));
+                let mult: Matrix = prev_weight
+                    .dot(&layer.weights)
+                    .map(&|n| layer.activation.calc(n));
 
                 if i != self.layers.len() - 1 {
                     prev_weight = mult.clone();
@@ -109,7 +105,9 @@ impl <T: Activation> NeuralNetwork<T> {
                 // first layer (first iteration)
                 let samples_input: Matrix = samples_input_to_matrix(&samples);
 
-                let mult: Matrix = samples_input.dot(&layer.weights).map(&|n| layer.activation.calc(n));
+                let mult: Matrix = samples_input
+                    .dot(&layer.weights)
+                    .map(&|n| layer.activation.calc(n));
 
                 if self.layers.len() > 1 {
                     // more than one layer
@@ -155,7 +153,7 @@ impl <T: Activation> NeuralNetwork<T> {
         // calling the error_fn
         match self.error_fn {
             Some(ref err_fn) => err_fn(err),
-            None => ()
+            None => (),
         }
 
         err
@@ -191,11 +189,10 @@ impl <T: Activation> NeuralNetwork<T> {
                     //
                     // where `last_layer_of_forward` is `layer` because of i == 0 condition
                     //
-                    let error = Matrix::generate(
-                        samples_outputs.rows(),
-                        samples_outputs.cols(),
-                        &|m,n| samples_outputs.get(m,n) - layer.get(m,n)
-                    );
+                    let error =
+                        Matrix::generate(samples_outputs.rows(), samples_outputs.cols(), &|m, n| {
+                            samples_outputs.get(m, n) - layer.get(m, n)
+                        });
 
                     // calculating error of this iteration
                     // and call the error_fn to notify
@@ -209,8 +206,11 @@ impl <T: Activation> NeuralNetwork<T> {
                     delta.dot(&self.layers[i].weights.clone().transpose())
                 };
 
-                let forward_derivative: Matrix = layer.map(&|n| self.layers[i].activation.derivative(n));
-                delta = Matrix::generate(layer.rows(), layer.cols(), &|m,n| error.get(m, n) * forward_derivative.get(m, n) * learning_rate);
+                let forward_derivative: Matrix =
+                    layer.map(&|n| self.layers[i].activation.derivative(n));
+                delta = Matrix::generate(layer.rows(), layer.cols(), &|m, n| {
+                    error.get(m, n) * forward_derivative.get(m, n) * learning_rate
+                });
 
                 let mut prev_layer: Matrix = samples_input_to_matrix(&self.samples);
 
@@ -231,7 +231,7 @@ impl <T: Activation> NeuralNetwork<T> {
                 self.layers[index].weights = Matrix::generate(
                     this_layer_weights.rows(),
                     this_layer_weights.cols(),
-                    &|m,n| syn.get(m, n) + this_layer_weights.get(m, n)
+                    &|m, n| syn.get(m, n) + this_layer_weights.get(m, n),
                 );
             }
         }
@@ -241,6 +241,7 @@ impl <T: Activation> NeuralNetwork<T> {
 #[cfg(test)]
 mod tests {
     use activation::Sigmoid;
+    use activation::HyperbolicTangent;
     use sample::Sample;
     use nl::NeuralLayer;
     use nn::NeuralNetwork;
@@ -300,7 +301,7 @@ mod tests {
     fn train_test_2layers() {
         let dataset = vec![
             Sample::new(vec![1f64, 0f64], vec![0f64]),
-            Sample::new(vec![1f64, 1f64], vec![1f64])
+            Sample::new(vec![1f64, 1f64], vec![1f64]),
         ];
 
         let mut test = NeuralNetwork::new(dataset);
@@ -325,7 +326,7 @@ mod tests {
             Sample::new(vec![0f64, 0f64, 1f64], vec![0f64]),
             Sample::new(vec![0f64, 1f64, 1f64], vec![0f64]),
             Sample::new(vec![1f64, 0f64, 1f64], vec![1f64]),
-            Sample::new(vec![1f64, 1f64, 1f64], vec![1f64])
+            Sample::new(vec![1f64, 1f64, 1f64], vec![1f64]),
         ];
 
         let mut test = NeuralNetwork::new(dataset);
@@ -351,7 +352,7 @@ mod tests {
             Sample::new(vec![0f64, 0f64, 1f64], vec![0f64]),
             Sample::new(vec![0f64, 1f64, 1f64], vec![0f64]),
             Sample::new(vec![1f64, 0f64, 1f64], vec![1f64]),
-            Sample::new(vec![1f64, 1f64, 1f64], vec![1f64])
+            Sample::new(vec![1f64, 1f64, 1f64], vec![1f64]),
         ];
 
         let mut test = NeuralNetwork::new(dataset);
@@ -367,5 +368,29 @@ mod tests {
         test.add_layer(NeuralLayer::new(1, 2, sig_activation));
 
         test.train(5, 0.1f64);
+    }
+
+    #[test]
+    fn network_with_two_activations() {
+        let dataset = vec![
+            Sample::new(vec![0f64, 0f64, 1f64], vec![0f64]),
+            Sample::new(vec![0f64, 1f64, 1f64], vec![0f64]),
+            Sample::new(vec![1f64, 0f64, 1f64], vec![1f64]),
+            Sample::new(vec![1f64, 1f64, 1f64], vec![1f64]),
+        ];
+
+        let mut test = NeuralNetwork::new(dataset);
+
+        // 1st layer = 2 neurons - 3 inputs
+        test.add_layer(NeuralLayer::new(2, 3, Sigmoid::new()));
+        // 2nd layer = 1 neuron - 2 inputs
+        test.add_layer(NeuralLayer::new(1, 2, HyperbolicTangent::new()));
+
+        test.train(5, 0.1f64);
+
+        let think = test.evaluate(Sample::predict(vec![1f64, 0f64, 1f64]));
+
+        assert_eq!(think.rows(), 1);
+        assert_eq!(think.cols(), 1);
     }
 }

@@ -11,7 +11,6 @@ impl SoftPlus {
 }
 
 impl Activation for SoftPlus {
-
     /// Calculates the SoftPlus of input `x`
     fn calc(&self, x: f64) -> f64 {
         (1f64 + x.exp()).ln()
