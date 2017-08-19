@@ -10,7 +10,6 @@ impl Sigmoid {
 }
 
 impl Activation for Sigmoid {
-    
     /// Calculates the Sigmoid of input `x`
     fn calc(&self, x: f64) -> f64 {
         1f64 / (1f64 + (-x).exp())

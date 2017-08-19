@@ -11,7 +11,6 @@ impl HyperbolicTangent {
 }
 
 impl Activation for HyperbolicTangent {
-
     /// Calculates the tanh of input `x`
     fn calc(&self, x: f64) -> f64 {
         x.tanh()

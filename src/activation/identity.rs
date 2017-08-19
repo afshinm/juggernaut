@@ -10,7 +10,6 @@ impl Identity {
 }
 
 impl Activation for Identity {
-    
     /// Calculates the Identity of input `x`
     fn calc(&self, x: f64) -> f64 {
         x
@@ -39,4 +38,3 @@ mod tests {
         assert_approx_eq!(activation.derivative(15f64), 1f64);
     }
 }
-

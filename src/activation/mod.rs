@@ -19,5 +19,3 @@ pub trait Activation {
     // Derivative
     fn derivative(&self, x: f64) -> f64;
 }
-
-

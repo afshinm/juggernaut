@@ -9,7 +9,9 @@ pub fn samples_input_to_matrix(samples: &Vec<Sample>) -> Matrix {
         f64_vec.push(sample.inputs.clone());
     }
 
-    return Matrix::generate(samples.len(), samples[0].get_inputs_count(), &|m,n| f64_vec[m][n]);
+    return Matrix::generate(samples.len(), samples[0].get_inputs_count(), &|m, n| {
+        f64_vec[m][n]
+    });
 }
 
 pub fn samples_output_to_matrix(samples: &Vec<Sample>) -> Matrix {
@@ -19,5 +21,7 @@ pub fn samples_output_to_matrix(samples: &Vec<Sample>) -> Matrix {
         f64_vec.push(sample.outputs.clone().unwrap());
     }
 
-    return Matrix::generate(samples.len(), samples[0].get_outputs_count(), &|m,n| f64_vec[m][n]);
+    return Matrix::generate(samples.len(), samples[0].get_outputs_count(), &|m, n| {
+        f64_vec[m][n]
+    });
 }

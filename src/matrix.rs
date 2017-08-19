@@ -51,17 +51,17 @@ impl MatrixTrait for Matrix {
 
     /// Returns a vector with `m` rows and `n` columns with elements of 0
     fn zero(m: usize, n: usize) -> Matrix {
-        Matrix::generate(m, n, &|_,_| 0f64)
+        Matrix::generate(m, n, &|_, _| 0f64)
     }
 
     /// Returns a vector with `m` rows and `n` columns with random elements
     fn random(m: usize, n: usize) -> Matrix {
-        Matrix::generate(m, n, &|_,_| rand::thread_rng().gen_range(-1f64, 1f64))
+        Matrix::generate(m, n, &|_, _| rand::thread_rng().gen_range(-1f64, 1f64))
     }
 
     /// Generates Matrix from a vector
     fn from_vec(v: &Vec<f64>) -> Matrix {
-        Matrix::generate(1, v.len(), &|_,n| v[n])
+        Matrix::generate(1, v.len(), &|_, n| v[n])
     }
 
     /// Returns a row of Matrix
@@ -110,12 +110,12 @@ impl MatrixTrait for Matrix {
 
     /// Transpose of a Matrix
     fn transpose(&self) -> Matrix {
-        return Matrix::generate(self.cols(), self.rows(), &|m,n| self.get(n,m));
+        return Matrix::generate(self.cols(), self.rows(), &|m, n| self.get(n, m));
     }
 
     /// Map
     fn map(&self, f: &Fn(f64) -> f64) -> Matrix {
-        return Matrix::generate(self.rows(), self.cols(), &|m,n| f(self.get(m, n)))
+        return Matrix::generate(self.rows(), self.cols(), &|m, n| f(self.get(m, n)));
     }
 }
 
@@ -168,7 +168,11 @@ mod tests {
     #[test]
     fn random_mul_test3() {
         let a = Matrix(vec![vec![1f64, 2f64, 3f64], vec![4f64, 5f64, 6f64]]);
-        let b = Matrix(vec![vec![7f64, 8f64], vec![9f64, 10f64], vec![11f64, 12f64]]);
+        let b = Matrix(vec![
+            vec![7f64, 8f64],
+            vec![9f64, 10f64],
+            vec![11f64, 12f64],
+        ]);
         let result = Matrix(vec![vec![58f64, 64f64], vec![139f64, 154f64]]);
 
         assert_eq!(a.dot(&b), result);
@@ -176,14 +180,9 @@ mod tests {
 
     #[test]
     fn random_mul_test4() {
-        let a = Matrix(vec![
-           vec![1f64, 0f64]
-        ]);
+        let a = Matrix(vec![vec![1f64, 0f64]]);
 
-        let b = Matrix(vec![
-           vec![3f64, 4f64, 5f64],
-           vec![2f64, 3f64, 5f64]
-        ]);
+        let b = Matrix(vec![vec![3f64, 4f64, 5f64], vec![2f64, 3f64, 5f64]]);
 
         let result = Matrix(vec![vec![3f64, 4f64, 5f64]]);
 
@@ -203,8 +202,16 @@ mod tests {
 
     #[test]
     fn transpose() {
-        let a = Matrix(vec![vec![4f64, 7f64, 2f64, 1f64], vec![3f64, 9f64, 8f64, 6f64]]);
-        let b = Matrix(vec![vec![4f64, 3f64], vec![7f64, 9f64], vec![2f64, 8f64], vec![1f64, 6f64]]);
+        let a = Matrix(vec![
+            vec![4f64, 7f64, 2f64, 1f64],
+            vec![3f64, 9f64, 8f64, 6f64],
+        ]);
+        let b = Matrix(vec![
+            vec![4f64, 3f64],
+            vec![7f64, 9f64],
+            vec![2f64, 8f64],
+            vec![1f64, 6f64],
+        ]);
 
         assert_eq!(a.transpose(), b);
     }
