@@ -1,5 +1,4 @@
 use nl::NeuralLayer;
-use activation::Activation;
 use sample::Sample;
 use matrix::Matrix;
 use matrix::MatrixTrait;
@@ -9,15 +8,13 @@ use utils::samples_output_to_matrix;
 /// Represents a Neural Network with layers, inputs and outputs
 pub struct NeuralNetwork {
     layers: Vec<NeuralLayer>,
-    samples: Vec<Sample>,
     error_fn: Option<Box<Fn(f64)>>,
 }
 
 impl NeuralNetwork {
-    pub fn new(samples: Vec<Sample>) -> NeuralNetwork {
+    pub fn new() -> NeuralNetwork {
         NeuralNetwork {
             layers: vec![],
-            samples: samples,
             error_fn: None,
         }
     }
@@ -44,8 +41,7 @@ impl NeuralNetwork {
     /// use juggernaut::activation::Activation;
     /// use juggernaut::activation::Sigmoid;
     ///
-    /// let dataset = vec![Sample::new(vec![1f64, 0f64], vec![0f64])];
-    /// let mut test = NeuralNetwork::new(dataset);
+    /// let mut test = NeuralNetwork::new();
     ///
     /// // 1st layer = 4 neurons - 2 inputs
     /// let nl1 = NeuralLayer::new(4, 2, Sigmoid::new());
@@ -54,22 +50,18 @@ impl NeuralNetwork {
     /// # }
     /// ```
     pub fn add_layer(&mut self, layer: NeuralLayer) {
-        let prev_layer_neurons: usize = {
-            if self.layers.len() > 0 {
-                // 1 for len()
-                self.layers[self.layers.len() - 1].neurons
-            } else {
-                self.samples[0].get_inputs_count()
-            }
-        };
+        if self.layers.len() > 0 {
+            let prev_layer_neurons = self.layers[self.layers.len() - 1].neurons;
 
-        if prev_layer_neurons != layer.inputs {
-            panic!(
-                "New layer should have enough inputs. \
-                 Expected {}, got {}",
-                prev_layer_neurons,
-                layer.inputs
-            );
+            // 1 for len()
+            if prev_layer_neurons != layer.inputs {
+                panic!(
+                    "New layer should have enough inputs. \
+                     Expected {}, got {}",
+                    prev_layer_neurons,
+                    layer.inputs
+                );
+            }
         }
 
         self.layers.push(layer);
@@ -159,9 +151,9 @@ impl NeuralNetwork {
         err
     }
 
-    pub fn train(&mut self, epochs: i32, learning_rate: f64) {
+    pub fn train(&mut self, samples: Vec<Sample>, epochs: i32, learning_rate: f64) {
         for _ in 0..epochs {
-            let mut output: Vec<Matrix> = self.forward(&self.samples);
+            let mut output: Vec<Matrix> = self.forward(&samples);
 
             // because we are backpropagating
             output.reverse();
@@ -181,7 +173,7 @@ impl NeuralNetwork {
                 //
                 let error = if i == 0 {
                     //last layer (output)
-                    let samples_outputs: Matrix = samples_output_to_matrix(&self.samples);
+                    let samples_outputs: Matrix = samples_output_to_matrix(&samples);
 
                     // this is:
                     //
@@ -212,7 +204,7 @@ impl NeuralNetwork {
                     error.get(m, n) * forward_derivative.get(m, n) * learning_rate
                 });
 
-                let mut prev_layer: Matrix = samples_input_to_matrix(&self.samples);
+                let mut prev_layer: Matrix = samples_input_to_matrix(&samples);
 
                 if i != output.len() - 1 {
                     // TODO (afshinm): is this necessary to clone here?
@@ -251,13 +243,13 @@ mod tests {
     fn forward_test() {
         let dataset = vec![Sample::new(vec![1f64, 0f64], vec![0f64])];
 
-        let mut test = NeuralNetwork::new(dataset);
+        let mut test = NeuralNetwork::new();
 
         let sig_activation = Sigmoid::new();
         // 1st layer = 1 neurons - 2 inputs
         test.add_layer(NeuralLayer::new(1, 2, sig_activation));
 
-        let forward = test.forward(&test.samples);
+        let forward = test.forward(&dataset);
         assert_eq!(forward.len(), 1);
     }
 
@@ -265,7 +257,7 @@ mod tests {
     fn forward_test_2layers() {
         let dataset = vec![Sample::new(vec![1f64, 0f64], vec![0f64])];
 
-        let mut test = NeuralNetwork::new(dataset);
+        let mut test = NeuralNetwork::new();
 
         let sig_activation = Sigmoid::new();
 
@@ -274,7 +266,7 @@ mod tests {
         // 2nd layer = 1 neuron - 3 inputs
         test.add_layer(NeuralLayer::new(1, 3, sig_activation));
 
-        let forward = test.forward(&test.samples);
+        let forward = test.forward(&dataset);
 
         assert_eq!(forward.len(), 2);
     }
@@ -283,16 +275,16 @@ mod tests {
     fn train_test() {
         let dataset = vec![Sample::new(vec![1f64, 0f64], vec![0f64])];
 
-        let mut test = NeuralNetwork::new(dataset);
+        let mut test = NeuralNetwork::new();
 
         let sig_activation = Sigmoid::new();
 
         // 1st layer = 1 neurons - 2 inputs
         test.add_layer(NeuralLayer::new(1, 2, sig_activation));
 
-        let forward = test.forward(&test.samples);
+        let forward = test.forward(&dataset);
 
-        test.train(10, 0.1f64);
+        test.train(dataset, 10, 0.1f64);
 
         assert_eq!(forward.len(), 1);
     }
@@ -304,7 +296,7 @@ mod tests {
             Sample::new(vec![1f64, 1f64], vec![1f64]),
         ];
 
-        let mut test = NeuralNetwork::new(dataset);
+        let mut test = NeuralNetwork::new();
 
         let sig_activation = Sigmoid::new();
 
@@ -313,9 +305,9 @@ mod tests {
         // 2nd layer = 1 neuron - 3 inputs
         test.add_layer(NeuralLayer::new(1, 3, sig_activation));
 
-        let forward = test.forward(&test.samples);
+        let forward = test.forward(&dataset);
 
-        test.train(5, 0.1f64);
+        test.train(dataset, 5, 0.1f64);
 
         assert_eq!(forward.len(), 2);
     }
@@ -329,7 +321,7 @@ mod tests {
             Sample::new(vec![1f64, 1f64, 1f64], vec![1f64]),
         ];
 
-        let mut test = NeuralNetwork::new(dataset);
+        let mut test = NeuralNetwork::new();
 
         let sig_activation = Sigmoid::new();
 
@@ -338,7 +330,7 @@ mod tests {
         // 2nd layer = 1 neuron - 2 inputs
         test.add_layer(NeuralLayer::new(1, 2, sig_activation));
 
-        test.train(5, 0.1f64);
+        test.train(dataset, 5, 0.1f64);
 
         let think = test.evaluate(Sample::predict(vec![1f64, 0f64, 1f64]));
 
@@ -355,7 +347,7 @@ mod tests {
             Sample::new(vec![1f64, 1f64, 1f64], vec![1f64]),
         ];
 
-        let mut test = NeuralNetwork::new(dataset);
+        let mut test = NeuralNetwork::new();
 
         // error should be more than 0
         test.error(|err| assert!(err > 0f64));
@@ -367,7 +359,7 @@ mod tests {
         // 2nd layer = 1 neuron - 2 inputs
         test.add_layer(NeuralLayer::new(1, 2, sig_activation));
 
-        test.train(5, 0.1f64);
+        test.train(dataset, 5, 0.1f64);
     }
 
     #[test]
@@ -379,14 +371,14 @@ mod tests {
             Sample::new(vec![1f64, 1f64, 1f64], vec![1f64]),
         ];
 
-        let mut test = NeuralNetwork::new(dataset);
+        let mut test = NeuralNetwork::new();
 
         // 1st layer = 2 neurons - 3 inputs
         test.add_layer(NeuralLayer::new(2, 3, Sigmoid::new()));
         // 2nd layer = 1 neuron - 2 inputs
         test.add_layer(NeuralLayer::new(1, 2, HyperbolicTangent::new()));
 
-        test.train(5, 0.1f64);
+        test.train(dataset, 5, 0.1f64);
 
         let think = test.evaluate(Sample::predict(vec![1f64, 0f64, 1f64]));
 
