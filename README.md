@@ -18,7 +18,7 @@ fn main() {
         Sample::new(vec![1f64, 1f64, 1f64], vec![1f64])
     ];
     
-    let mut test = NeuralNetwork::new(dataset);
+    let mut test = NeuralNetwork::new();
 
     let sig_activation = Sigmoid::new();
 
@@ -32,7 +32,7 @@ fn main() {
         println!("error({})", err.to_string());
     });
 
-    test.train(10000);
+    test.train(dataset, 1000, 0.1f64);
     
     let think = test.evaluate(Sample::predict(vec![1f64, 0f64, 1f64]));
 

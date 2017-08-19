@@ -14,12 +14,12 @@ fn main() {
         Sample::new(vec![0f64, 0f64, 1f64], vec![0f64]),
         Sample::new(vec![0f64, 1f64, 1f64], vec![0f64]),
         Sample::new(vec![1f64, 0f64, 1f64], vec![1f64]),
-        Sample::new(vec![1f64, 1f64, 1f64], vec![1f64])
+        Sample::new(vec![1f64, 1f64, 1f64], vec![1f64]),
     ];
 
     println!("Creating the network...");
 
-    let mut test = NeuralNetwork::new(dataset);
+    let mut test = NeuralNetwork::new();
 
     let sig_activation = Sigmoid::new();
     // 1st layer = 2 neurons - 3 inputs
@@ -38,7 +38,7 @@ fn main() {
         println!("error({})", err.to_string());
     });
 
-    test.train(1000, 0.1f64);
+    test.train(dataset, 1000, 0.1f64);
 
     println!("Done!!");
 
