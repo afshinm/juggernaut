@@ -153,6 +153,7 @@ impl NeuralNetwork {
 
     pub fn train(&mut self, samples: Vec<Sample>, epochs: i32, learning_rate: f64) {
         for _ in 0..epochs {
+
             let mut output: Vec<Matrix> = self.forward(&samples);
 
             // because we are backpropagating
@@ -162,6 +163,9 @@ impl NeuralNetwork {
             let mut delta: Matrix = Matrix::zero(0, 0);
 
             for (i, layer) in output.iter().enumerate() {
+                // because of `reverse`
+                let index: usize = self.layers.len() - 1 - i;
+                
                 // because it is different when we want to calculate error for each layer for the
                 // output layer it is:
                 //
@@ -195,11 +199,12 @@ impl NeuralNetwork {
                     //
                     //     delta_of_previous_layer.dot(layer)
                     //
-                    delta.dot(&self.layers[i].weights.clone().transpose())
+                    delta.dot(&self.layers[index + 1].weights.clone().transpose())
                 };
 
                 let forward_derivative: Matrix =
-                    layer.map(&|n| self.layers[i].activation.derivative(n));
+                    layer.map(&|n| self.layers[index].activation.derivative(n));
+
                 delta = Matrix::generate(layer.rows(), layer.cols(), &|m, n| {
                     error.get(m, n) * forward_derivative.get(m, n) * learning_rate
                 });
@@ -208,13 +213,12 @@ impl NeuralNetwork {
 
                 if i != output.len() - 1 {
                     // TODO (afshinm): is this necessary to clone here?
-                    prev_layer = output[output.len() - i - 1].clone();
+                    prev_layer = output[i + 1].clone();
                 }
 
                 // updating weights of this layer
                 let syn: Matrix = prev_layer.transpose().dot(&delta);
 
-                let index: usize = self.layers.len() - 1 - i;
                 // forward output and network layers are the same, with a reversed order
                 // TODO (afshinm): is this necessary to clone here?
                 let this_layer_weights: &Matrix = &self.layers[index].weights.clone();
@@ -379,6 +383,60 @@ mod tests {
         test.add_layer(NeuralLayer::new(1, 2, HyperbolicTangent::new()));
 
         test.train(dataset, 5, 0.1f64);
+
+        let think = test.evaluate(Sample::predict(vec![1f64, 0f64, 1f64]));
+
+        assert_eq!(think.rows(), 1);
+        assert_eq!(think.cols(), 1);
+    }
+
+    #[test]
+    fn two_hidden_layers() {
+        let dataset = vec![
+            Sample::new(vec![0f64, 0f64, 1f64], vec![0f64]),
+            Sample::new(vec![0f64, 1f64, 1f64], vec![0f64]),
+            Sample::new(vec![1f64, 0f64, 1f64], vec![1f64]),
+            Sample::new(vec![1f64, 1f64, 1f64], vec![1f64]),
+        ];
+
+        let mut test = NeuralNetwork::new();
+
+        // 1st layer = 2 neurons - 3 inputs
+        test.add_layer(NeuralLayer::new(2, 3, Sigmoid::new()));
+        // 2nd layer = 4 neurons - 2 inputs
+        test.add_layer(NeuralLayer::new(4, 2, Sigmoid::new()));
+        // 3rd layer = 1 neuron - 4 inputs
+        test.add_layer(NeuralLayer::new(1, 4, Sigmoid::new()));
+
+        test.train(dataset, 1, 0.1f64);
+
+        let think = test.evaluate(Sample::predict(vec![1f64, 0f64, 1f64]));
+
+        assert_eq!(think.rows(), 1);
+        assert_eq!(think.cols(), 1);
+    }
+
+    #[test]
+    fn three_hidden_layers() {
+        let dataset = vec![
+            Sample::new(vec![0f64, 0f64, 1f64], vec![0f64]),
+            Sample::new(vec![0f64, 1f64, 1f64], vec![0f64]),
+            Sample::new(vec![1f64, 0f64, 1f64], vec![1f64]),
+            Sample::new(vec![1f64, 1f64, 1f64], vec![1f64]),
+        ];
+
+        let mut test = NeuralNetwork::new();
+
+        // 1st layer = 2 neurons - 3 inputs
+        test.add_layer(NeuralLayer::new(2, 3, Sigmoid::new()));
+        // 2nd layer = 4 neurons - 2 inputs
+        test.add_layer(NeuralLayer::new(4, 2, Sigmoid::new()));
+        // 3rd layer = 8 neurons - 4 inputs
+        test.add_layer(NeuralLayer::new(8, 4, Sigmoid::new()));
+        // 4th layer = 1 neuron - 4 inputs
+        test.add_layer(NeuralLayer::new(1, 8, Sigmoid::new()));
+
+        test.train(dataset, 1, 0.1f64);
 
         let think = test.evaluate(Sample::predict(vec![1f64, 0f64, 1f64]));
 
