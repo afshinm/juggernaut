@@ -1,9 +1,15 @@
 [package]
 name = "juggernaut"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Afshin Mehrabani <afshin.meh@gmail.com>"]
+homepage = "http://juggernaut.rs"
+repository = "https://github.com/afshinm/juggernaut"
+readme = "README.md"
+keywords = ["ai", "neural network", "deep learning"]
+categories = ["science", "algorithms"]
 description = "Neural Network in Rust"
 license = "GPL-3.0"
+travis-ci = { repository = "https://travis-ci.org/afshinm/juggernaut" }
 
 [dependencies]
 assert_approx_eq = "1.0.0"
