@@ -1,6 +1,7 @@
 extern crate rand;
 
-use rand::Rng;
+use rand::{IsaacRng, Rng, SeedableRng};
+use std::sync::Mutex;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Matrix(Vec<Vec<f64>>);
@@ -56,7 +57,12 @@ impl MatrixTrait for Matrix {
 
     /// Returns a vector with `m` rows and `n` columns with random elements
     fn random(m: usize, n: usize) -> Matrix {
-        Matrix::generate(m, n, &|_, _| rand::thread_rng().gen_range(-1f64, 1f64))
+        // TODO (afshinm): is this correct to set an array with one element as a seed?
+        let numbers = Mutex::new(
+            (0..).scan(IsaacRng::from_seed(&[42]), |rng, _| Some(rng.next_f64())),
+        );
+
+        Matrix::generate(m, n, &|_, _| numbers.lock().unwrap().next().unwrap())
     }
 
     /// Generates Matrix from a vector
