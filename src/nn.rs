@@ -422,7 +422,8 @@ mod tests {
 
         let mut test = NeuralNetwork::new();
 
-        // error should be more than 0
+        // TODO (afshinm): this test is not complete. 
+        // it should count the number of calls of the closure as well
         test.on_epoch(|forward| {
             assert_eq!(2, forward.len());
         });
