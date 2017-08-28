@@ -9,7 +9,7 @@ use utils::samples_output_to_matrix;
 pub struct NeuralNetwork {
     layers: Vec<NeuralLayer>,
     on_error_fn: Option<Box<Fn(f64)>>,
-    on_epoch_fn: Option<Box<Fn(&Vec<Matrix>)>>,
+    on_epoch_fn: Option<Box<Fn(&NeuralNetwork)>>,
 }
 
 impl NeuralNetwork {
@@ -33,7 +33,7 @@ impl NeuralNetwork {
     /// To add a callback function to get called after each epoch
     pub fn on_epoch<FN>(&mut self, callback_fn: FN)
     where
-        FN: 'static + Fn(&Vec<Matrix>),
+        FN: 'static + Fn(&NeuralNetwork),
     {
         self.on_epoch_fn = Some(Box::new(callback_fn));
     }
@@ -47,9 +47,9 @@ impl NeuralNetwork {
     }
 
     /// To emit the `on_epoch` callback
-    fn emit_on_epoch(&self, forward: &Vec<Matrix>) {
+    fn emit_on_epoch(&self) {
         match self.on_epoch_fn {
-            Some(ref epoch_fn) => epoch_fn(forward),
+            Some(ref epoch_fn) => epoch_fn(&self),
             None => (),
         }
     }
@@ -257,7 +257,7 @@ impl NeuralNetwork {
             }
 
             // call on_epoch callback
-            self.emit_on_epoch(&output);
+            self.emit_on_epoch();
         }
     }
 }
@@ -424,8 +424,12 @@ mod tests {
 
         // TODO (afshinm): this test is not complete. 
         // it should count the number of calls of the closure as well
-        test.on_epoch(|forward| {
-            assert_eq!(2, forward.len());
+        test.on_epoch(|this| {
+            assert_eq!(2, this.layers[0].weights.cols());
+            assert_eq!(3, this.layers[0].weights.rows());
+
+            assert_eq!(1, this.layers[1].weights.cols());
+            assert_eq!(2, this.layers[1].weights.rows());
         });
 
         let sig_activation = Sigmoid::new();
