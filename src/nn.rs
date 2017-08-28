@@ -8,24 +8,50 @@ use utils::samples_output_to_matrix;
 /// Represents a Neural Network with layers, inputs and outputs
 pub struct NeuralNetwork {
     layers: Vec<NeuralLayer>,
-    error_fn: Option<Box<Fn(f64)>>,
+    on_error_fn: Option<Box<Fn(f64)>>,
+    on_epoch_fn: Option<Box<Fn(&NeuralNetwork)>>,
 }
 
 impl NeuralNetwork {
     pub fn new() -> NeuralNetwork {
         NeuralNetwork {
             layers: vec![],
-            error_fn: None,
+            on_error_fn: None,
+            on_epoch_fn: None,
         }
     }
 
     /// To add a callback function and receive the errors of the network during training process
     /// Please note that there is another function that basically calcualtes the error value
-    pub fn error<FN>(&mut self, callback_fn: FN)
+    pub fn on_error<FN>(&mut self, callback_fn: FN)
     where
         FN: 'static + Fn(f64),
     {
-        self.error_fn = Some(Box::new(callback_fn));
+        self.on_error_fn = Some(Box::new(callback_fn));
+    }
+
+    /// To add a callback function to get called after each epoch
+    pub fn on_epoch<FN>(&mut self, callback_fn: FN)
+    where
+        FN: 'static + Fn(&NeuralNetwork),
+    {
+        self.on_epoch_fn = Some(Box::new(callback_fn));
+    }
+
+    /// To emit the `on_error` callback
+    fn emit_on_error(&self, err: f64) {
+        match self.on_error_fn {
+            Some(ref err_fn) => err_fn(err),
+            None => (),
+        }
+    }
+
+    /// To emit the `on_epoch` callback
+    fn emit_on_epoch(&self) {
+        match self.on_epoch_fn {
+            Some(ref epoch_fn) => epoch_fn(&self),
+            None => (),
+        }
     }
 
     /// To add a new layer to the network
@@ -65,6 +91,11 @@ impl NeuralNetwork {
         }
 
         self.layers.push(layer);
+    }
+
+    /// To get the layers of the network
+    pub fn get_layers(&self) -> &Vec<NeuralLayer> {
+        &self.layers
     }
 
     /// This is the forward method of the network which calculates the random weights
@@ -125,12 +156,9 @@ impl NeuralNetwork {
         forward.last().unwrap().clone()
     }
 
-    /// This function calculates the error of network during training and calls the `error_fn` if
-    /// it is available
-    ///
-    /// This is a private function
-    fn _error(&self, error: &Matrix) -> f64 {
-
+    /// This function calculates the error rate of network during training and
+    /// calls the `on_error_fn` if it is available
+    fn error(&self, error: &Matrix) -> f64 {
         // calculating the median
         let mut error_vec: Vec<f64> = error.row(0).clone();
         error_vec.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -142,11 +170,7 @@ impl NeuralNetwork {
             error_vec[mid] as f64
         }).abs();
 
-        // calling the error_fn
-        match self.error_fn {
-            Some(ref err_fn) => err_fn(err),
-            None => (),
-        }
+        self.emit_on_error(err);
 
         err
     }
@@ -192,7 +216,8 @@ impl NeuralNetwork {
 
                     // calculating error of this iteration
                     // and call the error_fn to notify
-                    self._error(&error);
+                    self.error(&error);
+
                     error
                 } else {
                     // this is:
@@ -230,6 +255,9 @@ impl NeuralNetwork {
                     &|m, n| syn.get(m, n) + this_layer_weights.get(m, n),
                 );
             }
+
+            // call on_epoch callback
+            self.emit_on_epoch();
         }
     }
 }
@@ -242,6 +270,21 @@ mod tests {
     use nl::NeuralLayer;
     use nn::NeuralNetwork;
     use matrix::MatrixTrait;
+
+    #[test]
+    fn get_layers_test() {
+        let mut test = NeuralNetwork::new();
+
+        let layers = vec![NeuralLayer::new(1, 2, Sigmoid::new())];
+
+        for layer in layers {
+            test.add_layer(layer);
+        }
+
+        let get_layers = test.get_layers();
+
+        assert_eq!(get_layers.len(), 1);
+    }
 
     #[test]
     fn forward_test() {
@@ -354,7 +397,40 @@ mod tests {
         let mut test = NeuralNetwork::new();
 
         // error should be more than 0
-        test.error(|err| assert!(err > 0f64));
+        test.on_error(|err| {
+            assert!(err > 0f64);
+        });
+
+        let sig_activation = Sigmoid::new();
+
+        // 1st layer = 2 neurons - 3 inputs
+        test.add_layer(NeuralLayer::new(2, 3, sig_activation));
+        // 2nd layer = 1 neuron - 2 inputs
+        test.add_layer(NeuralLayer::new(1, 2, sig_activation));
+
+        test.train(dataset, 5, 0.1f64);
+    }
+
+    #[test]
+    fn on_epoch_test() {
+        let dataset = vec![
+            Sample::new(vec![0f64, 0f64, 1f64], vec![0f64]),
+            Sample::new(vec![0f64, 1f64, 1f64], vec![0f64]),
+            Sample::new(vec![1f64, 0f64, 1f64], vec![1f64]),
+            Sample::new(vec![1f64, 1f64, 1f64], vec![1f64]),
+        ];
+
+        let mut test = NeuralNetwork::new();
+
+        // TODO (afshinm): this test is not complete. 
+        // it should count the number of calls of the closure as well
+        test.on_epoch(|this| {
+            assert_eq!(2, this.layers[0].weights.cols());
+            assert_eq!(3, this.layers[0].weights.rows());
+
+            assert_eq!(1, this.layers[1].weights.cols());
+            assert_eq!(2, this.layers[1].weights.rows());
+        });
 
         let sig_activation = Sigmoid::new();
 

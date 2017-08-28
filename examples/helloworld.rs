@@ -34,7 +34,7 @@ fn main() {
 
     println!("Training (60,000 epochs)...");
 
-    test.error(|err| {
+    test.on_error(|err| {
         println!("error({})", err.to_string());
     });
 
