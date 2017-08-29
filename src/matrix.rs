@@ -18,6 +18,7 @@ pub trait MatrixTrait {
     fn dot(&self, b: &Matrix) -> Matrix;
     fn transpose(&self) -> Matrix;
     fn map(&self, f: &Fn(f64) -> f64) -> Matrix;
+    fn body(&self) -> &Vec<Vec<f64>>;
 }
 
 impl MatrixTrait for Matrix {
@@ -123,6 +124,11 @@ impl MatrixTrait for Matrix {
     fn map(&self, f: &Fn(f64) -> f64) -> Matrix {
         return Matrix::generate(self.rows(), self.cols(), &|m, n| f(self.get(m, n)));
     }
+
+    /// To get the first element of the Matrix (Vec<Vec<_>>)
+    fn body(&self) -> &Vec<Vec<f64>> {
+        return &self.0;
+    }
 }
 
 #[cfg(test)]
@@ -220,5 +226,20 @@ mod tests {
         ]);
 
         assert_eq!(a.transpose(), b);
+    }
+
+    #[test]
+    fn body() {
+        let a = Matrix(vec![
+            vec![4f64, 7f64, 2f64, 1f64],
+            vec![3f64, 9f64, 8f64, 6f64],
+        ]);
+
+        let b = vec![
+            vec![4f64, 7f64, 2f64, 1f64],
+            vec![3f64, 9f64, 8f64, 6f64],
+        ];
+
+        assert_eq!(a.body(), &b);
     }
 }
