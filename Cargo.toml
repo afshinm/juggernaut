@@ -1,6 +1,6 @@
 [package]
 name = "juggernaut"
-version = "0.8.0"
+version = "0.8.1"
 authors = ["Afshin Mehrabani <afshin.meh@gmail.com>"]
 homepage = "http://juggernaut.rs"
 repository = "https://github.com/afshinm/juggernaut"
