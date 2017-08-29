@@ -189,7 +189,7 @@ impl NeuralNetwork {
             for (i, layer) in output.iter().enumerate() {
                 // because of `reverse`
                 let index: usize = self.layers.len() - 1 - i;
-                
+
                 // because it is different when we want to calculate error for each layer for the
                 // output layer it is:
                 //
@@ -422,7 +422,7 @@ mod tests {
 
         let mut test = NeuralNetwork::new();
 
-        // TODO (afshinm): this test is not complete. 
+        // TODO (afshinm): this test is not complete.
         // it should count the number of calls of the closure as well
         test.on_epoch(|this| {
             assert_eq!(2, this.layers[0].weights.cols());
