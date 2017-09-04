@@ -1,4 +1,12 @@
 language: rust
+dist: trusty
+
+cache:
+    apt: true
+    directories:
+        - target/debug/deps
+        - target/debug/build
+
 
 script: make test
 
