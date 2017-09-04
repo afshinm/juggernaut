@@ -1,18 +1,31 @@
+sudo: false
 language: rust
-dist: trusty
+# necessary for `travis-cargo coveralls --no-sudo`
+addons:
+  apt:
+    packages:
+      - libcurl4-openssl-dev
+      - libelf-dev
+      - libdw-dev
+      - binutils-dev # optional: only required for the --verify flag of coveralls
+      
+# run builds for all the trains (and more)
+rust:
+  - nightly
+  - beta
+  - stable
 
-cache:
-    apt: true
-    directories:
-        - target/debug/deps
-        - target/debug/build
+# load travis-cargo
+before_script:
+  - |
+      pip install 'travis-cargo<0.2' --user &&
+      export PATH=$HOME/.local/bin:$PATH
 
+script:
+  - |
+      travis-cargo build &&
+      travis-cargo test
 
-script: make test
+after_success:
+  - travis-cargo coveralls --no-sudo --verify
 
-after_success: |
-  sudo apt-get install libcurl4-openssl-dev libelf-dev libdw-dev &&
-  wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
-  tar xzf master.tar.gz && mkdir kcov-master/build && cd kcov-master/build && cmake .. && make &&
-  sudo make install && cd ../.. &&
-  kcov --coveralls-id=$TRAVIS_JOB_ID --exclude-pattern=/.cargo target/kcov target/debug/juggernaut-*
