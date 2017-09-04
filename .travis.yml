@@ -24,7 +24,7 @@ before_script:
 script:
   - |
       travis-cargo build &&
-      travis-cargo test
-
+      travis-cargo test &&
+      travis-cargo bench
 after_success:
   - travis-cargo coveralls --no-sudo --verify
