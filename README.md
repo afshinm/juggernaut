@@ -1,4 +1,4 @@
-# Juggernaut [![Build Status](https://travis-ci.org/afshinm/juggernaut.svg?branch=master)](https://travis-ci.org/afshinm/juggernaut)
+# Juggernaut [![Build Status](https://travis-ci.org/afshinm/juggernaut.svg?branch=master)](https://travis-ci.org/afshinm/juggernaut) [![Coverage Status](https://coveralls.io/repos/github/afshinm/juggernaut/badge.svg?branch=master)](https://coveralls.io/github/afshinm/juggernaut?branch=master)
 > Juggernaut is an experimental Neural Network written in Rust
 
 <img src="http://juggernaut.rs/static/images/art.png" alt="hi" class="inline"/>
