@@ -11,8 +11,8 @@ addons:
       
 # run builds for all the trains (and more)
 rust:
-  - nightly
-  - beta
+  # - nightly
+  # - beta
   - stable
 
 # load travis-cargo
@@ -28,4 +28,3 @@ script:
 
 after_success:
   - travis-cargo coveralls --no-sudo --verify
-
