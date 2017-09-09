@@ -11,13 +11,13 @@ impl Identity {
 
 impl Activation for Identity {
     /// Calculates the Identity of input `x`
-    fn calc(&self, x: f64) -> f64 {
+    fn calc(&self, x: Vec<f64>) -> Vec<f64> {
         x
     }
 
     /// Calculates the Derivative Identity of input `x`
-    fn derivative(&self, _: f64) -> f64 {
-        1f64
+    fn derivative(&self, _: Vec<f64>) -> Vec<f64> {
+        vec![1f64]
     }
 }
 
@@ -29,12 +29,12 @@ mod tests {
     #[test]
     fn identity_test() {
         let activation = Identity::new();
-        assert_approx_eq!(activation.calc(5f64), 5f64);
+        assert_approx_eq!(activation.calc(vec![5f64])[0], 5f64);
     }
 
     #[test]
     fn identity_derivative_test() {
         let activation = Identity::new();
-        assert_approx_eq!(activation.derivative(15f64), 1f64);
+        assert_approx_eq!(activation.derivative(vec![15f64])[0], 1f64);
     }
 }

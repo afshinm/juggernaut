@@ -1,5 +1,5 @@
 use std::f64;
-use activation::ActivationVec;
+use activation::Activation;
 
 #[derive(Copy, Clone)]
 pub struct SoftMax;
@@ -10,7 +10,7 @@ impl SoftMax {
     }
 }
 
-impl ActivationVec for SoftMax {
+impl Activation for SoftMax {
     /// Calculates the SoftMax of input `x`
     fn calc(&self, x: Vec<f64>) -> Vec<f64> {
         let exps = x.iter().cloned().map(f64::exp as fn(f64) -> f64);
@@ -26,7 +26,7 @@ impl ActivationVec for SoftMax {
 
 #[cfg(test)]
 mod tests {
-    use super::ActivationVec;
+    use super::Activation;
     use super::SoftMax;
 
     #[test]
