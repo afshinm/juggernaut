@@ -27,9 +27,9 @@ impl NeuralNetwork {
     }
 
     /// To set a cost function for the network
-    pub fn set_cost_function<T>(&mut self, cost_function: T) 
-    where 
-        T: 'static + CostFunction
+    pub fn set_cost_function<T>(&mut self, cost_function: T)
+    where
+        T: 'static + CostFunction,
     {
         self.cost_function = Box::new(cost_function);
     }
@@ -235,7 +235,7 @@ impl NeuralNetwork {
                     //     y - last_layer_of_forward
                     //
                     // where `last_layer_of_forward` is `layer` because of i == 0 condition
-                    
+
                     let error =
                         Matrix::generate(samples_outputs.rows(), samples_outputs.cols(), &|m, n| {
                             samples_outputs.get(m, n) - layer.get(m, n)
