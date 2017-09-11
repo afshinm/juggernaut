@@ -2,12 +2,16 @@ use nl::NeuralLayer;
 use sample::Sample;
 use matrix::Matrix;
 use matrix::MatrixTrait;
+use cost::CostFunction;
+use cost::squared_error::SquaredError;
+use cost::CostFunctions;
 use utils::samples_input_to_matrix;
 use utils::samples_output_to_matrix;
 
 /// Represents a Neural Network with layers, inputs and outputs
 pub struct NeuralNetwork {
     layers: Vec<NeuralLayer>,
+    cost_function: Box<CostFunction>,
     on_error_fn: Option<Box<Fn(f64)>>,
     on_epoch_fn: Option<Box<Fn(&NeuralNetwork)>>,
 }
@@ -16,9 +20,18 @@ impl NeuralNetwork {
     pub fn new() -> NeuralNetwork {
         NeuralNetwork {
             layers: vec![],
+            cost_function: Box::new(SquaredError::new()),
             on_error_fn: None,
             on_epoch_fn: None,
         }
+    }
+
+    /// To set a cost function for the network
+    pub fn set_cost_function<T>(&mut self, cost_function: T)
+    where
+        T: 'static + CostFunction,
+    {
+        self.cost_function = Box::new(cost_function);
     }
 
     /// To add a callback function and receive the errors of the network during training process
@@ -98,6 +111,22 @@ impl NeuralNetwork {
         &self.layers
     }
 
+    /// This helper function is used in `forward` step to apply the filter function of cost
+    /// function.
+    /// For instance, we need to apply a Softmax for CrossEntropy
+    fn apply_cost_function_filter(&self, input: Matrix) -> Matrix {
+        match (*self.cost_function).name() {
+            CostFunctions::CrossEntropy => {
+                use activation::SoftMax;
+                use activation::Activation;
+
+                input.map_row(&|row| SoftMax::new().calc(row))
+            }
+            CostFunctions::SquaredError => input,
+            _ => panic!("Invalid cost function."),
+        }
+    }
+
     /// This is the forward method of the network which calculates the random weights
     /// and multiplies the inputs of given samples to the weights matrix. Thinks.
     pub fn forward(&self, samples: &Vec<Sample>) -> Vec<Matrix> {
@@ -114,12 +143,16 @@ impl NeuralNetwork {
             // and the reason is Rust's lifetime. clean this part, please.
 
             if i > 0 {
-                let mult: Matrix = prev_weight
+                // TODO (afshinm): can we use a map_row to take advantage of activation(Vec<f64>)?
+                let mut mult: Matrix = prev_weight
                     .dot(&layer.weights)
-                    .map(&|n| layer.activation.calc(n));
+                    .map(&|n| *layer.activation.calc(vec![n]).last().unwrap());
 
                 if i != self.layers.len() - 1 {
                     prev_weight = mult.clone();
+                } else {
+                    // this is the last layer (output)
+                    mult = self.apply_cost_function_filter(mult);
                 }
 
                 weights.push(mult);
@@ -128,14 +161,17 @@ impl NeuralNetwork {
                 // first layer (first iteration)
                 let samples_input: Matrix = samples_input_to_matrix(&samples);
 
-                let mult: Matrix = samples_input
+                let mut mult: Matrix = samples_input
                     .dot(&layer.weights)
-                    .map(&|n| layer.activation.calc(n));
+                    .map(&|n| *layer.activation.calc(vec![n]).last().unwrap());
 
                 if self.layers.len() > 1 {
                     // more than one layer
                     // storing the result for the next iteration
                     prev_weight = mult.clone();
+                } else {
+                    // this is the last layer (output)
+                    mult = self.apply_cost_function_filter(mult);
                 }
 
                 weights.push(mult);
@@ -158,17 +194,8 @@ impl NeuralNetwork {
 
     /// This function calculates the error rate of network during training and
     /// calls the `on_error_fn` if it is available
-    fn error(&self, error: &Matrix) -> f64 {
-        // calculating the median
-        let mut error_vec: Vec<f64> = error.row(0).clone();
-        error_vec.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        let mid = error_vec.len() / 2;
-
-        let err = (if error_vec.len() % 2 == 0 {
-            (error_vec[mid - 1] + error_vec[mid + 1]) / 2f64
-        } else {
-            error_vec[mid] as f64
-        }).abs();
+    fn error(&self, prediction: &Matrix, target: &Matrix) -> f64 {
+        let err = self.cost_function.calc(prediction, target);
 
         self.emit_on_error(err);
 
@@ -201,14 +228,14 @@ impl NeuralNetwork {
                 //
                 let error = if i == 0 {
                     //last layer (output)
-                    let samples_outputs: Matrix = samples_output_to_matrix(&samples);
+                    let samples_outputs = samples_output_to_matrix(&samples);
 
                     // this is:
                     //
                     //     y - last_layer_of_forward
                     //
                     // where `last_layer_of_forward` is `layer` because of i == 0 condition
-                    //
+
                     let error =
                         Matrix::generate(samples_outputs.rows(), samples_outputs.cols(), &|m, n| {
                             samples_outputs.get(m, n) - layer.get(m, n)
@@ -216,7 +243,7 @@ impl NeuralNetwork {
 
                     // calculating error of this iteration
                     // and call the error_fn to notify
-                    self.error(&error);
+                    self.error(&layer, &samples_outputs);
 
                     error
                 } else {
@@ -227,8 +254,13 @@ impl NeuralNetwork {
                     delta.dot(&self.layers[index + 1].weights.clone().transpose())
                 };
 
-                let forward_derivative: Matrix =
-                    layer.map(&|n| self.layers[index].activation.derivative(n));
+                let forward_derivative: Matrix = layer.map(&|n| {
+                    *self.layers[index]
+                        .activation
+                        .derivative(vec![n])
+                        .last()
+                        .unwrap()
+                });
 
                 delta = Matrix::generate(layer.rows(), layer.cols(), &|m, n| {
                     error.get(m, n) * forward_derivative.get(m, n) * learning_rate
@@ -270,6 +302,8 @@ mod tests {
     use nl::NeuralLayer;
     use nn::NeuralNetwork;
     use matrix::MatrixTrait;
+
+    /*
 
     #[test]
     fn get_layers_test() {
@@ -518,5 +552,25 @@ mod tests {
 
         assert_eq!(think.rows(), 1);
         assert_eq!(think.cols(), 1);
+    }
+    */
+
+    #[test]
+    fn train_test_multiclass() {
+        let dataset = vec![
+            Sample::new(vec![1f64, 0f64, 2f64], vec![0f64, 1f64]),
+            Sample::new(vec![1f64, 1f64, 5f64], vec![1f64, 0f64]),
+        ];
+
+        let mut test = NeuralNetwork::new();
+
+        let sig_activation = Sigmoid::new();
+
+        // 1st layer = 3 neurons - 2 inputs
+        test.add_layer(NeuralLayer::new(3, 3, sig_activation));
+        // 2nd layer = 1 neuron - 3 inputs
+        test.add_layer(NeuralLayer::new(2, 3, sig_activation));
+
+        test.train(dataset, 5, 0.1f64);
     }
 }

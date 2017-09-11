@@ -11,6 +11,7 @@ pub trait MatrixTrait {
     fn random(m: usize, n: usize) -> Self;
     fn from_vec(v: &Vec<f64>) -> Self;
     fn generate(m: usize, n: usize, f: &Fn(usize, usize) -> f64) -> Self;
+    fn generate_by_row(m: usize, n: usize, f: &Fn(usize) -> Vec<f64>) -> Self;
     fn row(&self, n: usize) -> &Vec<f64>;
     fn rows(&self) -> usize;
     fn cols(&self) -> usize;
@@ -18,6 +19,7 @@ pub trait MatrixTrait {
     fn dot(&self, b: &Matrix) -> Matrix;
     fn transpose(&self) -> Matrix;
     fn map(&self, f: &Fn(f64) -> f64) -> Matrix;
+    fn map_row(&self, f: &Fn(Vec<f64>) -> Vec<f64>) -> Matrix;
     fn body(&self) -> &Vec<Vec<f64>>;
 }
 
@@ -44,6 +46,24 @@ impl MatrixTrait for Matrix {
             for j in 0..n {
                 row.push(f(i, j));
             }
+
+            mtx.push(row);
+        }
+
+        Matrix(mtx)
+    }
+
+    /// Returns a new Matrix with `m` rows and `n` columns
+    ///
+    /// Works exactly same as `generate` but accepts a Fn that returns each row of the matrix
+    /// instead of each member of the matrix
+    fn generate_by_row(m: usize, n: usize, f: &Fn(usize) -> Vec<f64>) -> Matrix {
+        let mut mtx: Vec<Vec<f64>> = Vec::with_capacity(m);
+
+        for i in 0..m {
+            let row = f(i);
+
+            assert!(row.len() == n);
 
             mtx.push(row);
         }
@@ -123,6 +143,11 @@ impl MatrixTrait for Matrix {
     /// Map
     fn map(&self, f: &Fn(f64) -> f64) -> Matrix {
         return Matrix::generate(self.rows(), self.cols(), &|m, n| f(self.get(m, n)));
+    }
+
+    /// Map for each row of Matrix
+    fn map_row(&self, f: &Fn(Vec<f64>) -> Vec<f64>) -> Matrix {
+        return Matrix::generate_by_row(self.rows(), self.cols(), &|m| f(self.row(m).to_vec()));
     }
 
     /// To get the first element of the Matrix (Vec<Vec<_>>)
@@ -235,11 +260,46 @@ mod tests {
             vec![3f64, 9f64, 8f64, 6f64],
         ]);
 
-        let b = vec![
-            vec![4f64, 7f64, 2f64, 1f64],
-            vec![3f64, 9f64, 8f64, 6f64],
-        ];
+        let b = vec![vec![4f64, 7f64, 2f64, 1f64], vec![3f64, 9f64, 8f64, 6f64]];
 
         assert_eq!(a.body(), &b);
+    }
+
+    #[test]
+    fn generate_by_row() {
+        let a = Matrix(vec![
+            vec![4f64, 7f64, 2f64, 1f64],
+            vec![4f64, 7f64, 2f64, 1f64],
+        ]);
+
+        let b = Matrix::generate_by_row(2, 4, &|m| vec![4f64, 7f64, 2f64, 1f64]);
+
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn generate_by_row_variable_rows() {
+        let a = Matrix(vec![
+            vec![0f64, 0f64, 0f64, 0f64],
+            vec![1f64, 1f64, 1f64, 1f64],
+            vec![2f64, 2f64, 2f64, 2f64],
+        ]);
+
+        let b = Matrix::generate_by_row(3, 4, &|m| vec![m as f64, m as f64, m as f64, m as f64]);
+
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn map_row_variable_rows() {
+        let a = Matrix(vec![
+            vec![4f64, 7f64, 2f64, 1f64],
+            vec![4f64, 7f64, 2f64, 1f64],
+            vec![4f64, 7f64, 2f64, 1f64],
+        ]);
+
+        let b = a.map_row(&|row| vec![4f64, 7f64, 2f64, 1f64]);
+
+        assert_eq!(a, b);
     }
 }

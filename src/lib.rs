@@ -9,4 +9,5 @@ pub mod activation;
 pub mod nl;
 pub mod nn;
 pub mod sample;
+pub mod cost;
 mod utils;

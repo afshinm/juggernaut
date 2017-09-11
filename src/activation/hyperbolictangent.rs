@@ -12,14 +12,18 @@ impl HyperbolicTangent {
 
 impl Activation for HyperbolicTangent {
     /// Calculates the tanh of input `x`
-    fn calc(&self, x: f64) -> f64 {
-        x.tanh()
+    fn calc(&self, x: Vec<f64>) -> Vec<f64> {
+        x.iter().map(|n| n.tanh()).collect::<Vec<_>>()
     }
 
     /// Calculates the Derivative tanh of input `x`
-    fn derivative(&self, x: f64) -> f64 {
-        let tanh_factor = x.tanh();
-        1f64 - (tanh_factor * tanh_factor)
+    fn derivative(&self, x: Vec<f64>) -> Vec<f64> {
+        x.iter()
+            .map(|n| {
+                let tanh_factor = n.tanh();
+                1f64 - (tanh_factor * tanh_factor)
+            })
+            .collect::<Vec<_>>()
     }
 }
 
@@ -32,12 +36,12 @@ mod tests {
     #[test]
     fn tanh_test() {
         let activation = HyperbolicTangent::new();
-        assert_approx_eq!(activation.calc(3f64), 0.995054754f64);
+        assert_approx_eq!(activation.calc(vec![3f64])[0], 0.995054754f64);
     }
 
     #[test]
     fn tanh_derivative_test() {
         let activation = HyperbolicTangent::new();
-        assert_approx_eq!(activation.derivative(3f64), 0.0098660372f64);
+        assert_approx_eq!(activation.derivative(vec![3f64])[0], 0.0098660372f64);
     }
 }
