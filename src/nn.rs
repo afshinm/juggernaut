@@ -90,15 +90,14 @@ impl NeuralNetwork {
     /// ```
     pub fn add_layer(&mut self, layer: NeuralLayer) {
         if self.layers.len() > 0 {
-            let prev_layer_neurons = self.layers[self.layers.len() - 1].neurons;
+            let prev_layer_neurons = self.layers[self.layers.len() - 1].neurons();
 
-            // 1 for len()
-            if prev_layer_neurons != layer.inputs {
+            if prev_layer_neurons != layer.inputs() {
                 panic!(
                     "New layer should have enough inputs. \
                      Expected {}, got {}",
                     prev_layer_neurons,
-                    layer.inputs
+                    layer.inputs()
                 );
             }
         }
@@ -145,7 +144,7 @@ impl NeuralNetwork {
             if i > 0 {
                 // TODO (afshinm): can we use a map_row to take advantage of activation(Vec<f64>)?
                 let mut mult: Matrix = prev_weight
-                    .dot(&layer.weights)
+                    .dot(&layer.weights().transpose())
                     .map(&|n| *layer.activation.calc(vec![n]).last().unwrap());
 
                 if i != self.layers.len() - 1 {
@@ -162,7 +161,7 @@ impl NeuralNetwork {
                 let samples_input: Matrix = samples_input_to_matrix(&samples);
 
                 let mut mult: Matrix = samples_input
-                    .dot(&layer.weights)
+                    .dot(&layer.weights().transpose())
                     .map(&|n| *layer.activation.calc(vec![n]).last().unwrap());
 
                 if self.layers.len() > 1 {
@@ -251,7 +250,7 @@ impl NeuralNetwork {
                     //
                     //     delta_of_previous_layer.dot(layer)
                     //
-                    delta.dot(&self.layers[index + 1].weights.clone().transpose())
+                    delta.dot(&self.layers[index + 1].weights().clone())
                 };
 
                 let forward_derivative: Matrix = layer.map(&|n| {
@@ -274,18 +273,18 @@ impl NeuralNetwork {
                 }
 
                 // updating weights of this layer
-                let syn: Matrix = prev_layer.transpose().dot(&delta);
+                let syn: Matrix = delta.transpose().dot(&prev_layer);
 
                 // forward output and network layers are the same, with a reversed order
                 // TODO (afshinm): is this necessary to clone here?
-                let this_layer_weights: &Matrix = &self.layers[index].weights.clone();
+                let this_layer_weights: &Matrix = &self.layers[index].weights().clone();
 
                 // finally, set the new weights
-                self.layers[index].weights = Matrix::generate(
+                self.layers[index].set_weights(Matrix::generate(
                     this_layer_weights.rows(),
                     this_layer_weights.cols(),
                     &|m, n| syn.get(m, n) + this_layer_weights.get(m, n),
-                );
+                ));
             }
 
             // call on_epoch callback
@@ -302,8 +301,6 @@ mod tests {
     use nl::NeuralLayer;
     use nn::NeuralNetwork;
     use matrix::MatrixTrait;
-
-    /*
 
     #[test]
     fn get_layers_test() {
@@ -459,11 +456,11 @@ mod tests {
         // TODO (afshinm): this test is not complete.
         // it should count the number of calls of the closure as well
         test.on_epoch(|this| {
-            assert_eq!(2, this.layers[0].weights.cols());
-            assert_eq!(3, this.layers[0].weights.rows());
+            assert_eq!(3, this.layers[0].weights().cols());
+            assert_eq!(2, this.layers[0].weights().rows());
 
-            assert_eq!(1, this.layers[1].weights.cols());
-            assert_eq!(2, this.layers[1].weights.rows());
+            assert_eq!(2, this.layers[1].weights().cols());
+            assert_eq!(1, this.layers[1].weights().rows());
         });
 
         let sig_activation = Sigmoid::new();
@@ -553,7 +550,6 @@ mod tests {
         assert_eq!(think.rows(), 1);
         assert_eq!(think.cols(), 1);
     }
-    */
 
     #[test]
     fn train_test_multiclass() {
