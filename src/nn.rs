@@ -163,7 +163,6 @@ impl NeuralNetwork {
             } else {
                 // first layer (first iteration)
                 let samples_input: Matrix = sample_input_to_matrix(&sample);
-                println!("sample matrix: {:?}", samples_input);
 
                 let mut mult: Matrix = samples_input.dot(&layer.weights().transpose()).map(&|n, i, j| {
                     *layer.activation.calc(vec![n +  (1f64 * transposed_bias.get(0, j))]).last().unwrap()
@@ -279,9 +278,6 @@ impl NeuralNetwork {
                         prev_layer = output[i + 1].clone();
                     }
 
-                    println!("delta: {:?}", &delta);
-                    println!("biases: {:?}", &self.layers[index].biases());
-
                     // updating weights of this layer
                     let syn: Matrix = delta.transpose().dot(&prev_layer);
 
@@ -296,10 +292,10 @@ impl NeuralNetwork {
                             &|m, n| syn.get(m, n) + this_layer_weights.get(m, n),
                             ));
                 }
-
-                // call on_epoch callback
-                self.emit_on_epoch();
             }
+
+            // call on_epoch callback
+            self.emit_on_epoch();
         }
     }
 }
