@@ -8,6 +8,7 @@ pub struct NeuralLayer {
     inputs: usize,
     neurons: usize,
     weights: Matrix,
+    biases: Matrix,
 }
 
 impl NeuralLayer {
@@ -20,6 +21,7 @@ impl NeuralLayer {
             inputs: inputs,
             neurons: neurons,
             weights: Matrix::random(neurons, inputs),
+            biases: Matrix::random(neurons, 1),
         }
     }
 
@@ -31,12 +33,25 @@ impl NeuralLayer {
         self.inputs
     }
 
-    // weights with bias node
+    pub fn biases(&self) -> &Matrix {
+        &self.biases
+    }
+
+    // weights without bias node
     pub fn weights(&self) -> &Matrix {
         &self.weights
     }
 
+    // weights with bias node
+    pub fn weights_with_bias(&self) -> &Matrix {
+        &self.weights
+    }
+
     pub fn set_weights(&mut self, weights: Matrix) {
+        // because no one can change the dimension of the matrix
+        assert!(weights.rows() == self.weights.rows());
+        assert!(weights.cols() == self.weights.cols());
+
         self.weights = weights;
     }
 }
@@ -52,8 +67,19 @@ mod tests {
         let test = NeuralLayer::new(4, 3, Sigmoid::new());
         assert_eq!(3usize, test.inputs());
         assert_eq!(4usize, test.neurons());
-        
-        assert_eq!(4usize, test.weights.rows());
-        assert_eq!(3usize, test.weights.cols());
+
+        assert_eq!(4usize, test.weights().rows());
+        assert_eq!(3usize, test.weights().cols());
     }
+
+    /*
+    #[test]
+    fn neural_layer_bias() {
+        let test = NeuralLayer::new(4, 3, Sigmoid::new());
+
+        assert_eq!(4usize, test.weights_with_bias().rows());
+        // 4 because of bias node
+        assert_eq!(4usize, test.weights_with_bias().cols());
+    }
+    */
 }

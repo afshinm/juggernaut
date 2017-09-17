@@ -6,7 +6,9 @@ use cost::CostFunction;
 use cost::squared_error::SquaredError;
 use cost::CostFunctions;
 use utils::samples_input_to_matrix;
+use utils::sample_input_to_matrix;
 use utils::samples_output_to_matrix;
+use utils::sample_output_to_matrix;
 
 /// Represents a Neural Network with layers, inputs and outputs
 pub struct NeuralNetwork {
@@ -128,7 +130,7 @@ impl NeuralNetwork {
 
     /// This is the forward method of the network which calculates the random weights
     /// and multiplies the inputs of given samples to the weights matrix. Thinks.
-    pub fn forward(&self, samples: &Vec<Sample>) -> Vec<Matrix> {
+    pub fn forward(&self, sample: &Sample) -> Vec<Matrix> {
         if self.layers.len() == 0 {
             panic!("Neural network doesn't have any layers.");
         }
@@ -140,12 +142,14 @@ impl NeuralNetwork {
         for (i, layer) in self.layers.iter().enumerate() {
             // TODO: this part is ridiculously complicated, needs refactoring.
             // and the reason is Rust's lifetime. clean this part, please.
+            //
+            let transposed_bias = layer.biases().transpose();
 
             if i > 0 {
                 // TODO (afshinm): can we use a map_row to take advantage of activation(Vec<f64>)?
-                let mut mult: Matrix = prev_weight
-                    .dot(&layer.weights().transpose())
-                    .map(&|n| *layer.activation.calc(vec![n]).last().unwrap());
+                let mut mult: Matrix = prev_weight.dot(&layer.weights().transpose()).map(&|n, i, j| {
+                    *layer.activation.calc(vec![n +  (1f64 * transposed_bias.get(0, j))]).last().unwrap()
+                });
 
                 if i != self.layers.len() - 1 {
                     prev_weight = mult.clone();
@@ -158,11 +162,12 @@ impl NeuralNetwork {
 
             } else {
                 // first layer (first iteration)
-                let samples_input: Matrix = samples_input_to_matrix(&samples);
+                let samples_input: Matrix = sample_input_to_matrix(&sample);
+                println!("sample matrix: {:?}", samples_input);
 
-                let mut mult: Matrix = samples_input
-                    .dot(&layer.weights().transpose())
-                    .map(&|n| *layer.activation.calc(vec![n]).last().unwrap());
+                let mut mult: Matrix = samples_input.dot(&layer.weights().transpose()).map(&|n, i, j| {
+                    *layer.activation.calc(vec![n +  (1f64 * transposed_bias.get(0, j))]).last().unwrap()
+                });
 
                 if self.layers.len() > 1 {
                     // more than one layer
@@ -185,7 +190,7 @@ impl NeuralNetwork {
     /// This function simply passes the given sample to the `forward` function and returns the
     /// output of last layer
     pub fn evaluate(&self, sample: Sample) -> Matrix {
-        let forward: Vec<Matrix> = self.forward(&vec![sample]);
+        let forward: Vec<Matrix> = self.forward(&sample);
 
         // TODO (afshinm): is this correct to clone here?
         forward.last().unwrap().clone()
@@ -204,91 +209,97 @@ impl NeuralNetwork {
     pub fn train(&mut self, samples: Vec<Sample>, epochs: i32, learning_rate: f64) {
         for _ in 0..epochs {
 
-            let mut output: Vec<Matrix> = self.forward(&samples);
+            for sample in samples.iter() {
 
-            // because we are backpropagating
-            output.reverse();
+                let mut output: Vec<Matrix> = self.forward(&sample);
 
-            //let mut error: Matrix = Matrix::zero(0, 0);
-            let mut delta: Matrix = Matrix::zero(0, 0);
+                // because we are backpropagating
+                output.reverse();
 
-            for (i, layer) in output.iter().enumerate() {
-                // because of `reverse`
-                let index: usize = self.layers.len() - 1 - i;
+                //let mut error: Matrix = Matrix::zero(0, 0);
+                let mut delta: Matrix = Matrix::zero(0, 0);
 
-                // because it is different when we want to calculate error for each layer for the
-                // output layer it is:
-                //
-                //      y - output_layer
-                //
-                // but for other layers it is:
-                //
-                //      output_delta.dot(weights_1)
-                //
-                let error = if i == 0 {
-                    //last layer (output)
-                    let samples_outputs = samples_output_to_matrix(&samples);
+                for (i, layer) in output.iter().enumerate() {
+                    // because of `reverse`
+                    let index: usize = self.layers.len() - 1 - i;
 
-                    // this is:
+                    // because it is different when we want to calculate error for each layer for the
+                    // output layer it is:
                     //
-                    //     y - last_layer_of_forward
+                    //      y - output_layer
                     //
-                    // where `last_layer_of_forward` is `layer` because of i == 0 condition
-
-                    let error =
-                        Matrix::generate(samples_outputs.rows(), samples_outputs.cols(), &|m, n| {
-                            samples_outputs.get(m, n) - layer.get(m, n)
-                        });
-
-                    // calculating error of this iteration
-                    // and call the error_fn to notify
-                    self.error(&layer, &samples_outputs);
-
-                    error
-                } else {
-                    // this is:
+                    // but for other layers it is:
                     //
-                    //     delta_of_previous_layer.dot(layer)
+                    //      output_delta.dot(weights_1)
                     //
-                    delta.dot(&self.layers[index + 1].weights().clone())
-                };
+                    let error = if i == 0 {
+                        //last layer (output)
+                        let samples_outputs = sample_output_to_matrix(&sample);
 
-                let forward_derivative: Matrix = layer.map(&|n| {
-                    *self.layers[index]
-                        .activation
-                        .derivative(vec![n])
-                        .last()
-                        .unwrap()
-                });
+                        // this is:
+                        //
+                        //     y - last_layer_of_forward
+                        //
+                        // where `last_layer_of_forward` is `layer` because of i == 0 condition
 
-                delta = Matrix::generate(layer.rows(), layer.cols(), &|m, n| {
-                    error.get(m, n) * forward_derivative.get(m, n) * learning_rate
-                });
+                        let error =
+                            Matrix::generate(samples_outputs.rows(), samples_outputs.cols(), &|m, n| {
+                                samples_outputs.get(m, n) - layer.get(m, n)
+                            });
 
-                let mut prev_layer: Matrix = samples_input_to_matrix(&samples);
+                        // calculating error of this iteration
+                        // and call the error_fn to notify
+                        self.error(&layer, &samples_outputs);
 
-                if i != output.len() - 1 {
+                        error
+                    } else {
+                        // this is:
+                        //
+                        //     delta_of_previous_layer.dot(layer)
+                        //
+                        delta.dot(&self.layers[index + 1].weights().clone())
+                    };
+
+                    let forward_derivative: Matrix = layer.map(&|n, _, _| {
+                        *self.layers[index]
+                            .activation
+                            .derivative(vec![n])
+                            .last()
+                            .unwrap()
+                    });
+
+                    delta = Matrix::generate(layer.rows(), layer.cols(), &|m, n| {
+                        error.get(m, n) * forward_derivative.get(m, n) * learning_rate
+                    });
+
+                    let mut prev_layer: Matrix = sample_input_to_matrix(&sample);
+
+                    if i != output.len() - 1 {
+                        // TODO (afshinm): is this necessary to clone here?
+                        prev_layer = output[i + 1].clone();
+                    }
+
+                    println!("delta: {:?}", &delta);
+                    println!("biases: {:?}", &self.layers[index].biases());
+
+                    // updating weights of this layer
+                    let syn: Matrix = delta.transpose().dot(&prev_layer);
+
+                    // forward output and network layers are the same, with a reversed order
                     // TODO (afshinm): is this necessary to clone here?
-                    prev_layer = output[i + 1].clone();
+                    let this_layer_weights: &Matrix = &self.layers[index].weights().clone();
+
+                    // finally, set the new weights
+                    self.layers[index].set_weights(Matrix::generate(
+                            this_layer_weights.rows(),
+                            this_layer_weights.cols(),
+                            &|m, n| syn.get(m, n) + this_layer_weights.get(m, n),
+                            ));
                 }
 
-                // updating weights of this layer
-                let syn: Matrix = delta.transpose().dot(&prev_layer);
-
-                // forward output and network layers are the same, with a reversed order
-                // TODO (afshinm): is this necessary to clone here?
-                let this_layer_weights: &Matrix = &self.layers[index].weights().clone();
-
-                // finally, set the new weights
-                self.layers[index].set_weights(Matrix::generate(
-                    this_layer_weights.rows(),
-                    this_layer_weights.cols(),
-                    &|m, n| syn.get(m, n) + this_layer_weights.get(m, n),
-                ));
+                // call on_epoch callback
+                self.emit_on_epoch();
             }
-
-            // call on_epoch callback
-            self.emit_on_epoch();
         }
     }
 }
@@ -327,7 +338,7 @@ mod tests {
         // 1st layer = 1 neurons - 2 inputs
         test.add_layer(NeuralLayer::new(1, 2, sig_activation));
 
-        let forward = test.forward(&dataset);
+        let forward = test.forward(&dataset[0]);
         assert_eq!(forward.len(), 1);
     }
 
@@ -344,7 +355,7 @@ mod tests {
         // 2nd layer = 1 neuron - 3 inputs
         test.add_layer(NeuralLayer::new(1, 3, sig_activation));
 
-        let forward = test.forward(&dataset);
+        let forward = test.forward(&dataset[0]);
 
         assert_eq!(forward.len(), 2);
     }
@@ -360,17 +371,14 @@ mod tests {
         // 1st layer = 1 neurons - 2 inputs
         test.add_layer(NeuralLayer::new(1, 2, sig_activation));
 
-        let forward = test.forward(&dataset);
-
         test.train(dataset, 10, 0.1f64);
-
-        assert_eq!(forward.len(), 1);
     }
 
     #[test]
     fn train_test_2layers() {
         let dataset = vec![
             Sample::new(vec![1f64, 0f64], vec![0f64]),
+            Sample::new(vec![1f64, 1f64], vec![1f64]),
             Sample::new(vec![1f64, 1f64], vec![1f64]),
         ];
 
@@ -379,16 +387,17 @@ mod tests {
         let sig_activation = Sigmoid::new();
 
         // 1st layer = 3 neurons - 2 inputs
-        test.add_layer(NeuralLayer::new(3, 2, sig_activation));
+        //test.add_layer(NeuralLayer::new(3, 2, sig_activation));
         // 2nd layer = 1 neuron - 3 inputs
-        test.add_layer(NeuralLayer::new(1, 3, sig_activation));
+        test.add_layer(NeuralLayer::new(1, 2, sig_activation));
 
-        let forward = test.forward(&dataset);
+        //let forward = test.forward(&dataset);
 
-        test.train(dataset, 5, 0.1f64);
+        test.train(dataset, 100, 0.1f64);
 
-        assert_eq!(forward.len(), 2);
+        //assert_eq!(forward.len(), 2);
     }
+
 
     #[test]
     fn train_test_2layers_think() {
@@ -415,6 +424,8 @@ mod tests {
         assert_eq!(think.rows(), 1);
         assert_eq!(think.cols(), 1);
     }
+
+
 
     #[test]
     fn error_function_test() {
@@ -496,6 +507,7 @@ mod tests {
         assert_eq!(think.rows(), 1);
         assert_eq!(think.cols(), 1);
     }
+
 
     #[test]
     fn two_hidden_layers() {

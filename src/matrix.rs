@@ -18,7 +18,7 @@ pub trait MatrixTrait {
     fn get(&self, m: usize, n: usize) -> f64;
     fn dot(&self, b: &Matrix) -> Matrix;
     fn transpose(&self) -> Matrix;
-    fn map(&self, f: &Fn(f64) -> f64) -> Matrix;
+    fn map(&self, f: &Fn(f64, usize, usize) -> f64) -> Matrix;
     fn map_row(&self, f: &Fn(Vec<f64>) -> Vec<f64>) -> Matrix;
     fn body(&self) -> &Vec<Vec<f64>>;
 }
@@ -79,9 +79,10 @@ impl MatrixTrait for Matrix {
     /// Returns a vector with `m` rows and `n` columns with random elements
     fn random(m: usize, n: usize) -> Matrix {
         // TODO (afshinm): is this correct to set an array with one element as a seed?
-        let numbers = Mutex::new(
-            (0..).scan(IsaacRng::from_seed(&[42]), |rng, _| Some(rng.next_f64())),
-        );
+        let numbers = Mutex::new((0..).scan(
+            IsaacRng::from_seed(&[42]),
+            |rng, _| Some(rng.next_f64()),
+        ));
 
         Matrix::generate(m, n, &|_, _| numbers.lock().unwrap().next().unwrap())
     }
@@ -141,8 +142,8 @@ impl MatrixTrait for Matrix {
     }
 
     /// Map
-    fn map(&self, f: &Fn(f64) -> f64) -> Matrix {
-        return Matrix::generate(self.rows(), self.cols(), &|m, n| f(self.get(m, n)));
+    fn map(&self, f: &Fn(f64, usize, usize) -> f64) -> Matrix {
+        return Matrix::generate(self.rows(), self.cols(), &|m, n| f(self.get(m, n), m, n));
     }
 
     /// Map for each row of Matrix
