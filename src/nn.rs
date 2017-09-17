@@ -270,8 +270,14 @@ impl NeuralNetwork {
                     });
 
                     delta = Matrix::generate(layer.rows(), layer.cols(), &|m, n| {
-                        error.get(m, n) * forward_derivative.get(m, n) * learning_rate
+                        error.get(m, n) * forward_derivative.get(m, n)
                     });
+
+                    let biases = self.layers[index].biases().clone();
+
+                    self.layers[index].set_biases(biases.map(&|n, i, j| {
+                        n + (delta.get(j, i) * learning_rate)
+                    }));
 
                     let mut prev_layer: Matrix = sample_input_to_matrix(&sample);
 
@@ -281,7 +287,9 @@ impl NeuralNetwork {
                     }
 
                     // updating weights of this layer
-                    let syn: Matrix = delta.transpose().dot(&prev_layer);
+                    let syn: Matrix = delta.map(&|n, _, _| {
+                        n * learning_rate
+                    }).transpose().dot(&prev_layer);
 
                     // forward output and network layers are the same, with a reversed order
                     // TODO (afshinm): is this necessary to clone here?

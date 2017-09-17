@@ -54,6 +54,14 @@ impl NeuralLayer {
 
         self.weights = weights;
     }
+
+    pub fn set_biases(&mut self, weights: Matrix) {
+        // because no one can change the dimension of the matrix
+        assert!(weights.rows() == self.biases.rows());
+        assert!(weights.cols() == self.biases.cols());
+
+        self.biases = weights;
+    }
 }
 
 #[cfg(test)]
