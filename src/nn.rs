@@ -208,7 +208,7 @@ impl NeuralNetwork {
     pub fn train(&mut self, samples: Vec<Sample>, epochs: i32, learning_rate: f64) {
         for _ in 0..epochs {
 
-            for sample in samples.iter() {
+            for (k, sample) in samples.iter().enumerate() {
 
                 let mut output: Vec<Matrix> = self.forward(&sample);
 
@@ -246,9 +246,11 @@ impl NeuralNetwork {
                                 samples_outputs.get(m, n) - layer.get(m, n)
                             });
 
-                        // calculating error of this iteration
-                        // and call the error_fn to notify
-                        self.error(&layer, &samples_outputs);
+                        if samples.len() - 1 == k {
+                            // calculating error of this iteration
+                            // and call the error_fn to notify
+                            self.error(&layer, &samples_outputs);
+                        }
 
                         error
                     } else {
