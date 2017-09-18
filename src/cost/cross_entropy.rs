@@ -18,19 +18,36 @@ impl CostFunction for CrossEntropy {
     }
 
     fn calc(&self, prediction: &Matrix, target: &Matrix) -> f64 {
-        // log(prediction)
-        let prediction_log = prediction
+        let eps: f64 = f64::EPSILON;
+
+        let clipped_pred = prediction
             .row(0)
+            .iter()
+            .map(|n| {
+                let mut r = *n;
+
+                if *n < eps {
+                    r = eps;
+                } else if *n > 1f64 - eps {
+                    r = 1f64 - eps;
+                }
+
+                r
+            })
+            .collect::<Vec<_>>();
+
+        // log(prediction)
+        let prediction_log = clipped_pred
             .iter()
             .map(|n| n.log(f64::consts::E))
             .collect::<Vec<_>>();
+
 
         // target - 1
         let target_neg = target.row(0).iter().map(|n| 1f64 - n).collect::<Vec<_>>();
 
         // log(prediction - 1)
-        let prediction_neg_log = prediction
-            .row(0)
+        let prediction_neg_log = clipped_pred
             .iter()
             .map(|n| (1f64 - n).log(f64::consts::E))
             .collect::<Vec<_>>();

@@ -200,13 +200,13 @@ impl NeuralNetwork {
     fn error(&self, prediction: &Matrix, target: &Matrix) -> f64 {
         let err = self.cost_function.calc(prediction, target);
 
-        self.emit_on_error(err);
-
         err
     }
 
     pub fn train(&mut self, samples: Vec<Sample>, epochs: i32, learning_rate: f64) {
         for _ in 0..epochs {
+
+            let mut error_value = vec![];
 
             for (k, sample) in samples.iter().enumerate() {
 
@@ -246,10 +246,12 @@ impl NeuralNetwork {
                                 samples_outputs.get(m, n) - layer.get(m, n)
                             });
 
+                        // calculating error of this iteration
+                        error_value.push(self.error(&layer, &samples_outputs));
+
                         if samples.len() - 1 == k {
-                            // calculating error of this iteration
                             // and call the error_fn to notify
-                            self.error(&layer, &samples_outputs);
+                            self.emit_on_error(error_value.iter().fold(0f64, |n, sum| sum + n) / error_value.len() as f64);
                         }
 
                         error
@@ -318,6 +320,7 @@ mod tests {
     use nl::NeuralLayer;
     use nn::NeuralNetwork;
     use matrix::MatrixTrait;
+    use cost::cross_entropy::CrossEntropy;
 
     #[test]
     fn get_layers_test() {
@@ -554,14 +557,9 @@ mod tests {
 
         // 1st layer = 2 neurons - 3 inputs
         test.add_layer(NeuralLayer::new(2, 3, Sigmoid::new()));
-        // 2nd layer = 4 neurons - 2 inputs
-        test.add_layer(NeuralLayer::new(4, 2, Sigmoid::new()));
-        // 3rd layer = 8 neurons - 4 inputs
-        test.add_layer(NeuralLayer::new(8, 4, Sigmoid::new()));
-        // 4th layer = 1 neuron - 4 inputs
-        test.add_layer(NeuralLayer::new(1, 8, Sigmoid::new()));
+        test.add_layer(NeuralLayer::new(1, 2, Sigmoid::new()));
 
-        test.train(dataset, 1, 0.1f64);
+        test.train(dataset, 5, 0.1f64);
 
         let think = test.evaluate(Sample::predict(vec![1f64, 0f64, 1f64]));
 
@@ -585,6 +583,6 @@ mod tests {
         // 2nd layer = 1 neuron - 3 inputs
         test.add_layer(NeuralLayer::new(2, 3, sig_activation));
 
-        test.train(dataset, 5, 0.1f64);
+        test.train(dataset, 5, 0.01f64);
     }
 }
