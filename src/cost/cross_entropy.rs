@@ -36,6 +36,22 @@ impl CostFunction for CrossEntropy {
             })
             .collect::<Vec<_>>();
 
+        let clipped_target = target
+            .row(0)
+            .iter()
+            .map(|n| {
+                let mut r = *n;
+
+                if *n < eps {
+                    r = eps;
+                } else if *n > 1f64 - eps {
+                    r = 1f64 - eps;
+                }
+
+                r
+            })
+            .collect::<Vec<_>>();
+
         // log(prediction)
         let prediction_log = clipped_pred
             .iter()
@@ -44,7 +60,7 @@ impl CostFunction for CrossEntropy {
 
 
         // target - 1
-        let target_neg = target.row(0).iter().map(|n| 1f64 - n).collect::<Vec<_>>();
+        let target_neg = clipped_target.iter().map(|n| 1f64 - n).collect::<Vec<_>>();
 
         // log(prediction - 1)
         let prediction_neg_log = clipped_pred
