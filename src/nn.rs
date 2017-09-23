@@ -390,15 +390,15 @@ mod tests {
         let sig_activation = Sigmoid::new();
 
         // 1st layer = 3 neurons - 2 inputs
-        //test.add_layer(NeuralLayer::new(3, 2, sig_activation));
+        test.add_layer(NeuralLayer::new(2, 2, sig_activation));
         // 2nd layer = 1 neuron - 3 inputs
         test.add_layer(NeuralLayer::new(1, 2, sig_activation));
 
-        //let forward = test.forward(&dataset);
+        let forward = test.forward(&dataset[1]);
 
         test.train(dataset, 100, 0.1f64);
 
-        //assert_eq!(forward.len(), 2);
+        assert_eq!(forward.len(), 2);
     }
 
 
