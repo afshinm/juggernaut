@@ -27,7 +27,6 @@ impl Activation for Sigmoid {
 mod tests {
     use super::Activation;
     use super::Sigmoid;
-    use std::f64;
 
     #[test]
     fn sigmoid_test() {

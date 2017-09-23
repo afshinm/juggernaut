@@ -1,4 +1,3 @@
-use std::f64;
 use activation::Activation;
 
 #[derive(Copy, Clone)]

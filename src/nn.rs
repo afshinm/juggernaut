@@ -4,10 +4,7 @@ use matrix::Matrix;
 use matrix::MatrixTrait;
 use cost::CostFunction;
 use cost::squared_error::SquaredError;
-use cost::CostFunctions;
-use utils::samples_input_to_matrix;
 use utils::sample_input_to_matrix;
-use utils::samples_output_to_matrix;
 use utils::sample_output_to_matrix;
 use rand::Rng;
 use rand;
@@ -140,9 +137,9 @@ impl NeuralNetwork {
             let transposed_bias = layer.biases().transpose();
 
             if i > 0 {
-                let mut mult: Matrix = prev_weight
+                let mult: Matrix = prev_weight
                     .dot(&layer.weights().transpose())
-                    .map(&|n, i, j| n + (1f64 * transposed_bias.get(0, j)))
+                    .map(&|n, _, j| n + (1f64 * transposed_bias.get(0, j)))
                     .map_row(&|n| layer.activation.calc(n));
 
                 if i != self.layers.len() - 1 {
@@ -155,9 +152,9 @@ impl NeuralNetwork {
                 // first layer (first iteration)
                 let samples_input: Matrix = sample_input_to_matrix(&sample);
 
-                let mut mult: Matrix = samples_input
+                let mult: Matrix = samples_input
                     .dot(&layer.weights().transpose())
-                    .map(&|n, i, j| n + (1f64 * transposed_bias.get(0, j)))
+                    .map(&|n, _, j| n + (1f64 * transposed_bias.get(0, j)))
                     .map_row(&|n| layer.activation.calc(n));
 
                 if self.layers.len() > 1 {
@@ -205,7 +202,7 @@ impl NeuralNetwork {
 
             let mut error_value = vec![];
 
-            for (k, sample) in mut_samples.iter().enumerate() {
+            for sample in mut_samples.iter() {
 
                 let mut output: Vec<Matrix> = self.forward(&sample);
 
@@ -308,7 +305,6 @@ impl NeuralNetwork {
 mod tests {
     use activation::Sigmoid;
     use activation::SoftMax;
-    use activation::Activation;
     use activation::HyperbolicTangent;
     use sample::Sample;
     use nl::NeuralLayer;
@@ -427,8 +423,6 @@ mod tests {
         assert_eq!(think.rows(), 1);
         assert_eq!(think.cols(), 1);
     }
-
-
 
     #[test]
     fn error_function_test() {

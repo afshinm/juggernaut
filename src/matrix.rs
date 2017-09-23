@@ -273,7 +273,7 @@ mod tests {
             vec![4f64, 7f64, 2f64, 1f64],
         ]);
 
-        let b = Matrix::generate_by_row(2, 4, &|m| vec![4f64, 7f64, 2f64, 1f64]);
+        let b = Matrix::generate_by_row(2, 4, &|_| vec![4f64, 7f64, 2f64, 1f64]);
 
         assert_eq!(a, b);
     }
@@ -299,7 +299,7 @@ mod tests {
             vec![4f64, 7f64, 2f64, 1f64],
         ]);
 
-        let b = a.map_row(&|row| vec![4f64, 7f64, 2f64, 1f64]);
+        let b = a.map_row(&|_| vec![4f64, 7f64, 2f64, 1f64]);
 
         assert_eq!(a, b);
     }
