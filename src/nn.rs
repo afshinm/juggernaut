@@ -9,11 +9,14 @@ use utils::samples_input_to_matrix;
 use utils::sample_input_to_matrix;
 use utils::samples_output_to_matrix;
 use utils::sample_output_to_matrix;
+use rand::Rng;
+use rand;
 
 /// Represents a Neural Network with layers, inputs and outputs
 pub struct NeuralNetwork {
     layers: Vec<NeuralLayer>,
     cost_function: Box<CostFunction>,
+    shuffle_data: bool,
     on_error_fn: Option<Box<Fn(f64)>>,
     on_epoch_fn: Option<Box<Fn(&NeuralNetwork)>>,
 }
@@ -23,9 +26,16 @@ impl NeuralNetwork {
         NeuralNetwork {
             layers: vec![],
             cost_function: Box::new(SquaredError::new()),
+            shuffle_data: true,
             on_error_fn: None,
             on_epoch_fn: None,
         }
+    }
+
+    /// To set shuffle data flag
+    /// Enabling this option shuffles data before each iteration
+    pub fn set_shuffle_data(&mut self, enable: bool) {
+        self.shuffle_data = enable;
     }
 
     /// To set a cost function for the network
@@ -112,22 +122,6 @@ impl NeuralNetwork {
         &self.layers
     }
 
-    /// This helper function is used in `forward` step to apply the filter function of cost
-    /// function.
-    /// For instance, we need to apply a Softmax for CrossEntropy
-    fn apply_cost_function_filter(&self, input: Matrix) -> Matrix {
-        match (*self.cost_function).name() {
-            CostFunctions::CrossEntropy => {
-                use activation::SoftMax;
-                use activation::Activation;
-
-                input.map_row(&|row| SoftMax::new().calc(row))
-            }
-            CostFunctions::SquaredError => input,
-            _ => panic!("Invalid cost function."),
-        }
-    }
-
     /// This is the forward method of the network which calculates the random weights
     /// and multiplies the inputs of given samples to the weights matrix. Thinks.
     pub fn forward(&self, sample: &Sample) -> Vec<Matrix> {
@@ -146,16 +140,13 @@ impl NeuralNetwork {
             let transposed_bias = layer.biases().transpose();
 
             if i > 0 {
-                // TODO (afshinm): can we use a map_row to take advantage of activation(Vec<f64>)?
-                let mut mult: Matrix = prev_weight.dot(&layer.weights().transpose()).map(&|n, i, j| {
-                    *layer.activation.calc(vec![n +  (1f64 * transposed_bias.get(0, j))]).last().unwrap()
-                });
+                let mut mult: Matrix = prev_weight
+                    .dot(&layer.weights().transpose())
+                    .map(&|n, i, j| n + (1f64 * transposed_bias.get(0, j)))
+                    .map_row(&|n| layer.activation.calc(n));
 
                 if i != self.layers.len() - 1 {
                     prev_weight = mult.clone();
-                } else {
-                    // this is the last layer (output)
-                    mult = self.apply_cost_function_filter(mult);
                 }
 
                 weights.push(mult);
@@ -164,17 +155,15 @@ impl NeuralNetwork {
                 // first layer (first iteration)
                 let samples_input: Matrix = sample_input_to_matrix(&sample);
 
-                let mut mult: Matrix = samples_input.dot(&layer.weights().transpose()).map(&|n, i, j| {
-                    *layer.activation.calc(vec![n +  (1f64 * transposed_bias.get(0, j))]).last().unwrap()
-                });
+                let mut mult: Matrix = samples_input
+                    .dot(&layer.weights().transpose())
+                    .map(&|n, i, j| n + (1f64 * transposed_bias.get(0, j)))
+                    .map_row(&|n| layer.activation.calc(n));
 
                 if self.layers.len() > 1 {
                     // more than one layer
                     // storing the result for the next iteration
                     prev_weight = mult.clone();
-                } else {
-                    // this is the last layer (output)
-                    mult = self.apply_cost_function_filter(mult);
                 }
 
                 weights.push(mult);
@@ -188,8 +177,8 @@ impl NeuralNetwork {
     ///
     /// This function simply passes the given sample to the `forward` function and returns the
     /// output of last layer
-    pub fn evaluate(&self, sample: Sample) -> Matrix {
-        let forward: Vec<Matrix> = self.forward(&sample);
+    pub fn evaluate(&self, sample: &Sample) -> Matrix {
+        let forward: Vec<Matrix> = self.forward(sample);
 
         // TODO (afshinm): is this correct to clone here?
         forward.last().unwrap().clone()
@@ -203,12 +192,20 @@ impl NeuralNetwork {
         err
     }
 
-    pub fn train(&mut self, samples: Vec<Sample>, epochs: i32, learning_rate: f64) {
+    /// To train the network. It calls the forward pass and updates the weights using
+    /// backpropagation
+    pub fn train(&mut self, mut samples: Vec<Sample>, epochs: i32, learning_rate: f64) {
         for _ in 0..epochs {
+            let mut mut_samples = samples.as_mut_slice();
+
+            // shuffle data if it's enabled
+            if self.shuffle_data {
+                rand::thread_rng().shuffle(&mut mut_samples);
+            }
 
             let mut error_value = vec![];
 
-            for (k, sample) in samples.iter().enumerate() {
+            for (k, sample) in mut_samples.iter().enumerate() {
 
                 let mut output: Vec<Matrix> = self.forward(&sample);
 
@@ -222,8 +219,8 @@ impl NeuralNetwork {
                     // because of `reverse`
                     let index: usize = self.layers.len() - 1 - i;
 
-                    // because it is different when we want to calculate error for each layer for the
-                    // output layer it is:
+                    // because it is different when we want to calculate error for each layer for
+                    // the output layer it is:
                     //
                     //      y - output_layer
                     //
@@ -241,18 +238,14 @@ impl NeuralNetwork {
                         //
                         // where `last_layer_of_forward` is `layer` because of i == 0 condition
 
-                        let error =
-                            Matrix::generate(samples_outputs.rows(), samples_outputs.cols(), &|m, n| {
-                                samples_outputs.get(m, n) - layer.get(m, n)
-                            });
+                        let error = Matrix::generate(
+                            samples_outputs.rows(),
+                            samples_outputs.cols(),
+                            &|m, n| samples_outputs.get(m, n) - layer.get(m, n),
+                        );
 
                         // calculating error of this iteration
                         error_value.push(self.error(&layer, &samples_outputs));
-
-                        if samples.len() - 1 == k {
-                            // and call the error_fn to notify
-                            self.emit_on_error(error_value.iter().fold(0f64, |n, sum| sum + n) / error_value.len() as f64);
-                        }
 
                         error
                     } else {
@@ -263,13 +256,8 @@ impl NeuralNetwork {
                         delta.dot(&self.layers[index + 1].weights().clone())
                     };
 
-                    let forward_derivative: Matrix = layer.map(&|n, _, _| {
-                        *self.layers[index]
-                            .activation
-                            .derivative(vec![n])
-                            .last()
-                            .unwrap()
-                    });
+                    let forward_derivative: Matrix =
+                        layer.map_row(&|n| self.layers[index].activation.derivative(n));
 
                     delta = Matrix::generate(layer.rows(), layer.cols(), &|m, n| {
                         error.get(m, n) * forward_derivative.get(m, n)
@@ -289,9 +277,9 @@ impl NeuralNetwork {
                     }
 
                     // updating weights of this layer
-                    let syn: Matrix = delta.map(&|n, _, _| {
-                        n * learning_rate
-                    }).transpose().dot(&prev_layer);
+                    let syn: Matrix = delta.map(&|n, _, _| n * learning_rate).transpose().dot(
+                        &prev_layer,
+                    );
 
                     // forward output and network layers are the same, with a reversed order
                     // TODO (afshinm): is this necessary to clone here?
@@ -299,12 +287,16 @@ impl NeuralNetwork {
 
                     // finally, set the new weights
                     self.layers[index].set_weights(Matrix::generate(
-                            this_layer_weights.rows(),
-                            this_layer_weights.cols(),
-                            &|m, n| syn.get(m, n) + this_layer_weights.get(m, n),
-                            ));
+                        this_layer_weights.rows(),
+                        this_layer_weights.cols(),
+                        &|m, n| syn.get(m, n) + this_layer_weights.get(m, n),
+                    ));
                 }
             }
+
+            self.emit_on_error(
+                error_value.iter().fold(0f64, |n, sum| sum + n) / mut_samples.len() as f64,
+            );
 
             // call on_epoch callback
             self.emit_on_epoch();
@@ -315,6 +307,8 @@ impl NeuralNetwork {
 #[cfg(test)]
 mod tests {
     use activation::Sigmoid;
+    use activation::SoftMax;
+    use activation::Activation;
     use activation::HyperbolicTangent;
     use sample::Sample;
     use nl::NeuralLayer;
@@ -428,7 +422,7 @@ mod tests {
 
         test.train(dataset, 5, 0.1f64);
 
-        let think = test.evaluate(Sample::predict(vec![1f64, 0f64, 1f64]));
+        let think = test.evaluate(&Sample::predict(vec![1f64, 0f64, 1f64]));
 
         assert_eq!(think.rows(), 1);
         assert_eq!(think.cols(), 1);
@@ -511,7 +505,7 @@ mod tests {
 
         test.train(dataset, 5, 0.1f64);
 
-        let think = test.evaluate(Sample::predict(vec![1f64, 0f64, 1f64]));
+        let think = test.evaluate(&Sample::predict(vec![1f64, 0f64, 1f64]));
 
         assert_eq!(think.rows(), 1);
         assert_eq!(think.cols(), 1);
@@ -538,7 +532,7 @@ mod tests {
 
         test.train(dataset, 1, 0.1f64);
 
-        let think = test.evaluate(Sample::predict(vec![1f64, 0f64, 1f64]));
+        let think = test.evaluate(&Sample::predict(vec![1f64, 0f64, 1f64]));
 
         assert_eq!(think.rows(), 1);
         assert_eq!(think.cols(), 1);
@@ -559,9 +553,11 @@ mod tests {
         test.add_layer(NeuralLayer::new(2, 3, Sigmoid::new()));
         test.add_layer(NeuralLayer::new(1, 2, Sigmoid::new()));
 
+        test.set_cost_function(CrossEntropy);
+
         test.train(dataset, 5, 0.1f64);
 
-        let think = test.evaluate(Sample::predict(vec![1f64, 0f64, 1f64]));
+        let think = test.evaluate(&Sample::predict(vec![1f64, 0f64, 1f64]));
 
         assert_eq!(think.rows(), 1);
         assert_eq!(think.cols(), 1);
@@ -577,11 +573,31 @@ mod tests {
         let mut test = NeuralNetwork::new();
 
         let sig_activation = Sigmoid::new();
+        test.set_cost_function(CrossEntropy);
 
         // 1st layer = 3 neurons - 2 inputs
         test.add_layer(NeuralLayer::new(3, 3, sig_activation));
         // 2nd layer = 1 neuron - 3 inputs
-        test.add_layer(NeuralLayer::new(2, 3, sig_activation));
+        test.add_layer(NeuralLayer::new(2, 3, SoftMax::new()));
+
+        test.train(dataset, 5, 0.01f64);
+    }
+
+    #[test]
+    fn shuffle_data() {
+        let dataset = vec![
+            Sample::new(vec![1f64, 0f64, 2f64], vec![0f64, 1f64]),
+            Sample::new(vec![1f64, 1f64, 5f64], vec![1f64, 0f64]),
+        ];
+
+        let mut test = NeuralNetwork::new();
+
+        test.set_shuffle_data(true);
+
+        // 1st layer = 3 neurons - 2 inputs
+        test.add_layer(NeuralLayer::new(3, 3, Sigmoid::new()));
+        // 2nd layer = 1 neuron - 3 inputs
+        test.add_layer(NeuralLayer::new(2, 3, SoftMax::new()));
 
         test.train(dataset, 5, 0.01f64);
     }

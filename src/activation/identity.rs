@@ -16,8 +16,8 @@ impl Activation for Identity {
     }
 
     /// Calculates the Derivative Identity of input `x`
-    fn derivative(&self, _: Vec<f64>) -> Vec<f64> {
-        vec![1f64]
+    fn derivative(&self, v: Vec<f64>) -> Vec<f64> {
+        v.iter().map(|_| 1f64).collect::<Vec<_>>()
     }
 }
 
