@@ -42,7 +42,7 @@ fn main() {
 
     println!("Done!!");
 
-    let think = test.evaluate(Sample::predict(vec![1f64, 0f64, 1f64]));
+    let think = test.evaluate(&Sample::predict(vec![1f64, 0f64, 1f64]));
 
     println!("Evaluate [1, 0, 1] = {:?}", think.get(0, 0));
 }

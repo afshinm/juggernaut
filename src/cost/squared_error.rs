@@ -20,9 +20,9 @@ impl CostFunction for SquaredError {
         let mut errors = Vec::with_capacity(prediction.cols());
 
         for (i, p) in prediction.row(0).iter().enumerate() {
-            errors.push((target.get(0, i) - p).powi(2));
+            errors.push((target.get(0, i) - p).powi(2) / 2f64);
         }
 
-        errors.iter().fold(0f64, |sum, val| sum + val) / errors.len() as f64
+        errors.iter().fold(0f64, |sum, val| sum + val)
     }
 }

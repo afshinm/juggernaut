@@ -7,9 +7,7 @@ pub struct LeakyRectifiedLinearUnit {
 
 impl LeakyRectifiedLinearUnit {
     pub fn new(alpha: f64) -> LeakyRectifiedLinearUnit {
-        return LeakyRectifiedLinearUnit {
-            alpha_gradient: alpha,
-        };
+        return LeakyRectifiedLinearUnit { alpha_gradient: alpha };
     }
 }
 

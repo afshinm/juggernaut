@@ -40,4 +40,24 @@ mod tests {
         assert_approx_eq!(activation.derivative(vec![5f64])[0], -20f64);
     }
 
+    #[test]
+    fn sigmoid_derivative_correctness_test() {
+        let activation = Sigmoid::new();
+        let delta = 1e-10f64;
+        let val = vec![0.5f64, 0.1f64, 0.9f64];
+        let val_delta = val.iter().map(|n| n + delta).collect::<Vec<_>>();
+
+        let approx = activation
+            .calc(val_delta)
+            .iter()
+            .zip(activation.calc(val.clone()).iter())
+            .map(|(n, m)| (n - m) / delta)
+            .collect::<Vec<_>>();
+
+        let actual = activation.derivative(activation.calc(val.clone()));
+
+        for (n, m) in approx.iter().zip(actual.iter()) {
+            assert_approx_eq!(n, m);
+        }
+    }
 }
