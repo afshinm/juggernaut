@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Training a Neural Network using WebAssembly | Juggernaut</title>
+
+    <meta charset="utf-8">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+
+    <meta property="og:title" content="Training a Neural Network using WebAssembly | Juggernaut" />
+    <meta name="author" content="Afshin Mehrabani" />
+    <meta property="og:locale" content="en_US" />
+    <meta name="keywords" content="neural network, rust, WebAssembly, juggernaut, machine learning, visualization" />
+    <meta name="description" content="Juggernaut is an experimental Neural Network written in Rust. This demo page utilizes the power of Juggernaut and WebAssembly to train a Neural Network in your web browser and visualze all the steps using SVG and Canvas." />
+    <meta property="og:description" content="Juggernaut is an experimental Neural Network written in Rust. This demo page utilizes the power of Juggernaut and WebAssembly to train a Neural Network in your web browser and visualze all the steps using SVG and Canvas." />
+    <link rel="canonical" href="http://juggernaut.rs/demo/" />
+    <meta property="og:url" content="http://juggernaut.rs/demo/" />
+    <meta property="og:site_name" content="Juggernaut" />
+    <meta property="og:type" content="website" />
+
+    <style>
+      #network text {
+        pointer-events: none;
+      }
+
+      #network .node:hover {
+        stroke: #999;
+        stroke-opacity: .6;
+        stroke-width: 4px;
+      }
+
+      #network .link {
+        stroke: #999;
+        stroke-opacity: .6;
+        stroke-dasharray: 9 2;
+        stroke-dashoffset: 1;
+      }
+
+      #network.active .link {
+        animation: dash 0.5s linear forwards;
+        animation-iteration-count:infinite;
+      }
+
+      @keyframes dash {
+        to {
+          stroke-dashoffset: -10;
+        }
+      }
+    </style>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-103062405-1"></script>
+    <script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments)};
+gtag('js', new Date());
+
+gtag('config', 'UA-103062405-1');
+    </script>
+
+  </head>
+  <body>
+    <div id='root'>
+    </div>
+    <script src="/static/bundle.js"></script>
+
+    <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-50426bb44b15fab2"></script> 
+  </body>
+</html>
