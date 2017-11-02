@@ -2005,7 +2005,7 @@ integrateWasmJS();
 var ASM_CONSTS = [function($0) { Module.STDWEB.tmp = Module.STDWEB.to_js( $0 ); },
  function($0) { Module.STDWEB.increment_refcount( $0 ); },
  function($0) { Module.STDWEB.decrement_refcount( $0 ); },
- function($0, $1, $2, $3, $4) { Module.STDWEB.from_js($0, (function(){var fetch_callback = Module.STDWEB.to_js($1); var dataset_path = Module.STDWEB.to_js($2); fetch ("dataset/" + dataset_path + ".csv"). then ((res)=> res.text ()). then ((dataset)=> {fetch_callback (dataset , Module.STDWEB.to_js($3), Module.STDWEB.to_js($4));}); fetch_callback.drop ();})()); },
+ function($0, $1, $2, $3, $4) { Module.STDWEB.from_js($0, (function(){var fetch_callback = Module.STDWEB.to_js($1); var dataset_path = Module.STDWEB.to_js($2); fetch ("/demo/dataset/" + dataset_path + ".csv"). then ((res)=> res.text ()). then ((dataset)=> {fetch_callback (dataset , Module.STDWEB.to_js($3), Module.STDWEB.to_js($4));}); fetch_callback.drop ();})()); },
  function($0, $1) { Module.STDWEB.from_js($0, (function(){postMessage ("{ \"type\": \"error\", \"data\": " + Module.STDWEB.to_js($1)+ "}");})()); },
  function($0, $1) { Module.STDWEB.from_js($0, (function(){postMessage ("{ \"type\": \"layers\", \"data\": " + Module.STDWEB.to_js($1)+ "}");})()); },
  function($0, $1) { Module.STDWEB.from_js($0, (function(){postMessage ("{ \"type\": \"datasetEval\", \"data\": " + Module.STDWEB.to_js($1)+ "}");})()); },
