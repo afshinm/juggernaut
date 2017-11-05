@@ -1,7 +1,11 @@
-# Juggernaut [![Build Status](https://travis-ci.org/afshinm/juggernaut.svg?branch=master)](https://travis-ci.org/afshinm/juggernaut)
+# Juggernaut [![Build Status](https://travis-ci.org/afshinm/juggernaut.svg?branch=master)](https://travis-ci.org/afshinm/juggernaut) [![Coverage Status](https://coveralls.io/repos/github/afshinm/juggernaut/badge.svg?branch=master)](https://coveralls.io/github/afshinm/juggernaut?branch=master)
 > Juggernaut is an experimental Neural Network written in Rust
 
-<img src="http://juggernaut.rs/static/images/art.png" alt="hi" class="inline"/>
+<img src="http://juggernaut.rs/static/images/art.png" alt="Juggernaut" class="inline"/>
+
+# Demo
+
+[Juggernaut Demo](http://juggernaut.rs/demo/)
 
 # Example
 
@@ -18,19 +22,21 @@ fn main() {
         Sample::new(vec![1f64, 1f64, 1f64], vec![1f64])
     ];
     
-    let mut test = NeuralNetwork::new(dataset, Sigmoid::new());
+    let mut test = NeuralNetwork::new();
+
+    let sig_activation = Sigmoid::new();
 
     // 1st layer = 2 neurons - 3 inputs
-    test.add_layer(NeuralLayer::new(2, 3));
+    test.add_layer(NeuralLayer::new(2, 3, sig_activation));
 
     // 2nd layer = 1 neuron - 2 inputs
-    test.add_layer(NeuralLayer::new(1, 2));
+    test.add_layer(NeuralLayer::new(1, 2, sig_activation));
 
     test.error(|err| {
         println!("error({})", err.to_string());
     });
 
-    test.train(10000);
+    test.train(dataset, 1000, 0.1f64);
     
     let think = test.evaluate(Sample::predict(vec![1f64, 0f64, 1f64]));
 
@@ -44,7 +50,7 @@ and the output of `think` is the prediction of the network after training.
 
 # Documentation
 
-https://docs.rs/juggernaut
+[https://docs.rs/juggernaut](https://docs.rs/juggernaut)
 
 # Build
 
@@ -68,9 +74,12 @@ Install Rust 1.x and run:
 cargo test
 ```
 
-# Author
+# Authors
 
-Afshin Mehrabani (afshin.meh@gmail.com) and [contributors](https://github.com/afshinm/juggernaut/graphs/contributors)
+- Afshin Mehrabani (afshin.meh@gmail.com) 
+- Addtheice https://github.com/addtheice  
+
+and [contributors](https://github.com/afshinm/juggernaut/graphs/contributors)
 
 # FAQ
 
